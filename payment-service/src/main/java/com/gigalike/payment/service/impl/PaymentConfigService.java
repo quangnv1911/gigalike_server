@@ -1,10 +1,13 @@
 package com.gigalike.payment.service.impl;
 
-import com.gigalike.payment.dto.data.PaymentDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gigalike.payment.dto.data.CassoConfigDto;
+import com.gigalike.payment.dto.data.PaymentConfigDto;
 import com.gigalike.payment.entity.PaymentConfig;
 import com.gigalike.payment.repository.PaymentConfigRepository;
 import com.gigalike.payment.service.IPaymentConfigService;
 import com.gigalike.shared.exception.NotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,10 +23,11 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PaymentConfigService implements IPaymentConfigService {
     PaymentConfigRepository paymentConfigRepository;
-
+    ObjectMapper objectMapper;
 
     @Override
-    public void createPaymentConfig(PaymentDto paymentDto) {
+    @Transactional
+    public PaymentConfigDto createPaymentConfig(PaymentConfigDto paymentDto) {
         var paymentConfig = PaymentConfig.builder()
                 .enabled(paymentDto.isEnable())
                 .paymentType(paymentDto.getPaymentType())
@@ -34,21 +38,25 @@ public class PaymentConfigService implements IPaymentConfigService {
 
         PaymentConfig newPayment = paymentConfigRepository.save(paymentConfig);
         log.info("Payment with id {} config has been added successfully", newPayment.getId());
+        return PaymentConfigDto.fromPaymentConfig(newPayment);
     }
 
     @Override
-    public void updatePaymentConfig(UUID paymentConfigId, PaymentDto paymentDto) {
+    @Transactional
+    public PaymentConfigDto updatePaymentConfig(UUID paymentConfigId, PaymentConfigDto paymentDto) {
         var paymentConfig = getPaymentConfig(paymentConfigId);
         paymentConfig.setEnabled(paymentDto.isEnable());
         paymentConfig.setPaymentType(paymentDto.getPaymentType());
         paymentConfig.setCardNumber(paymentDto.getCardNumber());
         paymentConfig.setBankName(paymentDto.getBankName());
         paymentConfig.setUserName(paymentDto.getUserName());
-        paymentConfigRepository.save(paymentConfig);
+        var newPaymentConfig = paymentConfigRepository.save(paymentConfig);
         log.info("Payment with id {} config has been saved successfully", paymentConfigId);
+        return PaymentConfigDto.fromPaymentConfig(newPaymentConfig);
     }
 
     @Override
+    @Transactional
     public void deletePaymentConfig(UUID paymentConfigId) {
         var paymentConfig = getPaymentConfig(paymentConfigId);
         paymentConfigRepository.delete(paymentConfig);
@@ -56,10 +64,26 @@ public class PaymentConfigService implements IPaymentConfigService {
     }
 
     @Override
-    public List<PaymentDto> getPaymentConfig() {
+    public PaymentConfigDto getPaymentConfigById(UUID paymentConfigId) {
+        return PaymentConfigDto.fromPaymentConfig(getPaymentConfig(paymentConfigId));
+    }
+
+    @Override
+    public CassoConfigDto parseCassoConfig(UUID paymentConfigId) {
+        var paymentConfig = getPaymentConfig(paymentConfigId);
+        try {
+            return objectMapper.readValue(paymentConfig.getConfig(), CassoConfigDto.class);
+        } catch (Exception e) {
+            log.error("Could not parse CassoConfigDto from PaymentConfig with id {}", paymentConfig.getId());
+            throw new IllegalArgumentException("Invalid config JSON for payment id " + paymentConfig.getId(), e);
+        }
+    }
+
+    @Override
+    public List<PaymentConfigDto> getAllPaymentConfig() {
         return paymentConfigRepository.findAll()
                 .stream()
-                .map(config -> PaymentDto.builder()
+                .map(config -> PaymentConfigDto.builder()
                         .id(config.getId())
                         .bankName(config.getBankName())
                         .cardNumber(config.getCardNumber())
@@ -79,4 +103,6 @@ public class PaymentConfigService implements IPaymentConfigService {
         }
         return paymentConfig.get();
     }
+
+
 }

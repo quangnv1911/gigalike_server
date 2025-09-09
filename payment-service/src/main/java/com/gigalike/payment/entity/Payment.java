@@ -1,13 +1,18 @@
 package com.gigalike.payment.entity;
 
 import com.gigalike.payment.base.BaseEntity;
+import com.gigalike.payment.constant.PaymentStatus;
 import com.gigalike.payment.constant.PaymentType;
-import com.gigalike.payment.dto.data.CassoConfigDto;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+
+import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Builder
@@ -19,19 +24,15 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLDelete(sql = "UPDATE users SET is_delete = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PaymentConfig extends BaseEntity {
-    String bankName;
+public class Payment extends BaseEntity {
+    String amount;
 
-    String cardNumber;
-
-    String userName;
-
-    boolean enabled = true;
-
-    @Lob
-    String config;
+    UUID orderId;
 
     @Enumerated(EnumType.STRING)
     PaymentType paymentType;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 }
