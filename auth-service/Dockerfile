@@ -1,9 +1,19 @@
-FROM openjdk:17-jre-slim
+FROM maven:3.9.8-eclipse-temurin-17 AS builder
+
+WORKDIR /app
+
+COPY pom.xml .
+
+COPY src ./src
+
+RUN mvn clean package -DskipTests
+
+FROM openjdk:17-jdk-slim
 
 WORKDIR /app
 
 # Copy the JAR file
-COPY target/auth-service-*.jar app.jar
+COPY --from=builder target/auth-service-*.jar app.jar
 
 # Expose port
 EXPOSE 8081

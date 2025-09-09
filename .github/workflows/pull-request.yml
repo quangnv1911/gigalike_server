@@ -177,7 +177,7 @@ jobs:
           if [ ! -f Dockerfile ]; then
             echo "Creating Dockerfile for ${{ matrix.service }}"
             cat > Dockerfile << 'EOF'
-          FROM openjdk:17-jre-slim
+          FROM openjdk:17-jdk-slim
           
           WORKDIR /app
           

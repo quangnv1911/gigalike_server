@@ -1,9 +1,15 @@
-FROM openjdk:17-jre-slim
+FROM maven:3.9.8-eclipse-temurin-17 AS builder
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+FROM openjdk:17-jdk-slim
 
 WORKDIR /app
 
 # Copy the JAR file
-COPY target/api-gateway-*.jar app.jar
+COPY --from=builder target/api-gateway-*.jar app.jar
 
 # Expose port
 EXPOSE 8080

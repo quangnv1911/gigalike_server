@@ -6,10 +6,11 @@ services:
     image: mysql:8.0
     container_name: gigalike-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_ROOT_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       MYSQL_DATABASE: gigalike_auth
+      MYSQL_ROOT_HOST: "%"
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "${MYSQL_PORT}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -80,12 +81,6 @@ services:
       context: ./eureka-server
       dockerfile: Dockerfile
     container_name: gigalike-eureka
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-password}
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-      CONFIG_PASSWORD: ${CONFIG_PASSWORD:-configpass}
-      CONFIG_NAME: ${CONFIG_NAME:-config}
     ports:
       - "${EUREKA_SERVER_PORT:-8761}:8761"
     depends_on:
@@ -106,10 +101,6 @@ services:
       context: ./config-server
       dockerfile: Dockerfile
     container_name: gigalike-config-server
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      CONFIG_PASSWORD: ${CONFIG_PASSWORD:-configpass}
-      CONFIG_NAME: ${CONFIG_NAME:-config}
     ports:
       - "${CONFIG_SERVER_PORT:-8888}:8888"
     networks:
@@ -127,10 +118,6 @@ services:
       context: ./api-gateway
       dockerfile: Dockerfile
     container_name: gigalike-api-gateway
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:${EUREKA_PASSWORD:-password}@eureka-server:8761/eureka/
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
     ports:
       - "${API_GATEWAY_PORT:-8080}:8080"
     depends_on:
@@ -141,16 +128,12 @@ services:
     networks:
       - gigalike-network
 
-  # Business Services
+#  # Business Services
   auth-service:
     build:
       context: ./auth-service
       dockerfile: Dockerfile
     container_name: gigalike-auth-service
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:${EUREKA_PASSWORD:-password}@eureka-server:8761/eureka/
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
     ports:
       - "${AUTH_SERVICE_PORT:-8081}:8081"
     depends_on:
@@ -165,10 +148,6 @@ services:
       context: ./product-service
       dockerfile: Dockerfile
     container_name: gigalike-product-service
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:${EUREKA_PASSWORD:-password}@eureka-server:8761/eureka/
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
     ports:
       - "${PRODUCT_SERVICE_PORT:-8082}:8082"
     depends_on:
@@ -178,51 +157,40 @@ services:
     networks:
       - gigalike-network
 
-  order-service:
-    build:
-      context: ./order-service
-      dockerfile: Dockerfile
-    container_name: gigalike-order-service
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:${EUREKA_PASSWORD:-password}@eureka-server:8761/eureka/
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-    ports:
-      - "${ORDER_SERVICE_PORT:-8083}:8083"
-    depends_on:
-      - mysql
-      - config-server
-      - eureka-server
-    networks:
-      - gigalike-network
 
-  payment-service:
-    build:
-      context: ./payment-service
-      dockerfile: Dockerfile
-    container_name: gigalike-payment-service
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:${EUREKA_PASSWORD:-password}@eureka-server:8761/eureka/
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-    ports:
-      - "${PAYMENT_SERVICE_PORT:-8084}:8084"
-    depends_on:
-      - mongodb
-      - config-server
-      - eureka-server
-    networks:
-      - gigalike-network
-
+#  order-service:
+#    build:
+#      context: ./order-service
+#      dockerfile: Dockerfile
+#    container_name: gigalike-order-service
+#    ports:
+#      - "${ORDER_SERVICE_PORT:-8083}:8083"
+#    depends_on:
+#      - mysql
+#      - config-server
+#      - eureka-server
+#    networks:
+#      - gigalike-network
+#
+#  payment-service:
+#    build:
+#      context: ./payment-service
+#      dockerfile: Dockerfile
+#    container_name: gigalike-payment-service
+#    ports:
+#      - "${PAYMENT_SERVICE_PORT:-8084}:8084"
+#    depends_on:
+#      - mongodb
+#      - config-server
+#      - eureka-server
+#    networks:
+#      - gigalike-network
+#
   platform-service:
     build:
       context: ./platform-service
       dockerfile: Dockerfile
     container_name: gigalike-platform-service
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:${EUREKA_PASSWORD:-password}@eureka-server:8761/eureka/
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
     ports:
       - "${PLATFORM_SERVICE_PORT:-8086}:8086"
     depends_on:
