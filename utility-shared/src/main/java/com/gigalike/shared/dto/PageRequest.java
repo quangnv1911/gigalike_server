@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @JsonAutoDetect(
         getterVisibility = JsonAutoDetect.Visibility.NONE
 )
-public abstract class PageRequest {
+public class PageRequest {
     int page;
 
     int size;

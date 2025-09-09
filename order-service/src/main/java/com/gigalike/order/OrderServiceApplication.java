@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Import;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableFeignClients
-
 public class OrderServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(OrderServiceApplication.class, args);

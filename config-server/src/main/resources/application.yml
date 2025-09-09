@@ -1,22 +1,12 @@
 server:
-  port: 8888
+  port: ${CONFIG_SERVER_PORT}
 
 spring:
   application:
     name: config-server
   profiles:
-    active: native
-  cloud:
-    config:
-      server:
-        native:
-          search-locations: classpath:/config-repo/
-        git:
-          uri: ${GIT_REPO_CONFIG}
-          clone-on-start: true
-          default-label: main
-        # Enable environment repository to read .env file
-        bootstrap: true
+    active: ${SPRING_PROFILES_ACTIVE}
+
   security:
     user:
       name: ${CONFIG_NAME}
@@ -24,20 +14,26 @@ spring:
 
 eureka:
   client:
+    register-with-eureka: ${EUREKA_REGISTER_CONFIG_SERVER}
+    fetch-registry: ${EUREKA_FETCH_REGISTRY_CONFIG_SERVER}
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
   instance:
-    prefer-ip-address: true
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS}
 
 management:
+  health:
+    rabbit:
+      enabled: false
   endpoints:
     web:
       exposure:
-        include: health,info,refresh
+        include: env, health, info
   endpoint:
     health:
       show-details: always
 
 logging:
   level:
-    org.springframework.cloud.config: ${LOG_LEVEL:INFO}
+    org.springframework.cloud.config: ${LOG_LEVEL}
+

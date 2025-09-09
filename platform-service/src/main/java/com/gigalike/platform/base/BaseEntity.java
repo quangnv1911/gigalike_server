@@ -1,6 +1,5 @@
 package com.gigalike.platform.base;
 
-import com.gigalike.auth.base.AuditEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

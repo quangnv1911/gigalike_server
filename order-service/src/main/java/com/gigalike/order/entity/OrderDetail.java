@@ -20,9 +20,6 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderDetail extends BaseEntity {
 
-    @Column(name = "product_id")
-    UUID productId;
-
     @Column(name = "mmo_resource_id")
     UUID mmoResourceId;
 

@@ -1,9 +1,11 @@
 spring:
   application:
     name: order-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE}
   cloud:
     config:
-      uri: http://localhost:8888
-      username: config
-      password: configpass
+      uri: ${SPRING_CLOUD_CONFIG_URI}
+      username: ${CONFIG_NAME}
+      password: ${CONFIG_PASSWORD}
       fail-fast: true

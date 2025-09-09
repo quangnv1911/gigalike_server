@@ -3,9 +3,9 @@ package com.gigalike.auth.controller;
 import com.gigalike.auth.dto.response.AuthResponse;
 import com.gigalike.auth.dto.request.LoginRequest;
 import com.gigalike.auth.dto.request.RegisterRequest;
-import com.gigalike.auth.dto.data.UserDto;
 import com.gigalike.auth.service.IAuthService;
 import com.gigalike.shared.dto.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -30,8 +29,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse response = authService.login(request);
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        AuthResponse response = authService.login(httpRequest,request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 

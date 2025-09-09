@@ -1,6 +1,10 @@
 package com.gigalike.platform.config;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Value;
+import lombok.experimental.FieldDefaults;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -12,17 +16,15 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
 @Configuration
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RedisConfig {
-    @Value("${redis.host}")
-    private String redisHost;
-
-    @Value("${redis.port}")
-    private int redisPort;
+    RedisProperties redisProperties;
 
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         // Tạo Standalone Connection tới Redis
-        return new LettuceConnectionFactory(new RedisStandaloneConfiguration(redisHost, redisPort));
+        return new LettuceConnectionFactory(new RedisStandaloneConfiguration(redisProperties.getHost(), redisProperties.getPort()));
     }
 
 

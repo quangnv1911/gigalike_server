@@ -1,5 +1,6 @@
 package com.gigalike.platform.service.impl;
 
+import com.gigalike.platform.config.OtpProperties;
 import com.gigalike.platform.service.IOtpService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +19,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OtpService implements IOtpService {
-
-    @NonFinal
-    @Value("${otp.expire_time}")
-    Long OTP_EXPIRE_TIME;
-
-    @NonFinal
-    @Value("${otp.length}")
-    Long OTP_LENGTH;
+    OtpProperties otpProperties;
 
     RedisTemplate<String, String> keyDbTemplate;
     /**
@@ -38,11 +32,11 @@ public class OtpService implements IOtpService {
     public String generateOtp(String email) {
         SecureRandom random = new SecureRandom();
         StringBuilder otp = new StringBuilder();
-        for (int i = 0; i < OTP_LENGTH; i++) {
+        for (int i = 0; i < otpProperties.getLength(); i++) {
             otp.append(random.nextInt(10));  // Sinh ra một chữ số ngẫu nhiên từ 0 đến 9
         }
         String key = "OTP:" + email;
-        keyDbTemplate.opsForValue().set(key, otp.toString(), OTP_EXPIRE_TIME, TimeUnit.HOURS);
+        keyDbTemplate.opsForValue().set(key, otp.toString(), otpProperties.getExpireTime(), TimeUnit.HOURS);
         return otp.toString();
     }
 

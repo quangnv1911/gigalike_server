@@ -9,7 +9,8 @@ eureka:
     prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS}
     lease-renewal-interval-in-seconds: ${EUREKA_LEASE_RENEWAL_INTERVAL}
     lease-expiration-duration-in-seconds: ${EUREKA_LEASE_EXPIRATION_DURATION}
-
+blablo:
+  test: fdsfd
 management:
   endpoints:
     web:

@@ -60,7 +60,7 @@ public class AuthService implements IAuthService {
     AuthenticationManager authenticationManager;
     JwtUtil jwtUtil;
 
-    @Value("${security.oauth2.client.registration.google.client-id}")
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
     @NonFinal
     String googleClientId;
 

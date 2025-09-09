@@ -1,10 +1,14 @@
 package com.gigalike.shared.util;
 
+import com.gigalike.shared.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,18 +25,10 @@ import java.util.function.Function;
 @Component
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JwtUtil {
-
-    @Value("${jwt.secret:mySecretKey}")
-    String secret;
-
-    @Value("${jwt.access-token-expiration:3600000}") // 1 hour
-    Long accessTokenExpiration;
-
-    @Value("${jwt.refresh-token-expiration:604800000}") // 7 days
-    Long refreshTokenExpiration;
+    JwtProperties properties;
 
     SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        return Keys.hmacShaKeyFor(properties.getSecret().getBytes());
     }
 
     public String extractUsername(String token) {
@@ -63,19 +59,19 @@ public class JwtUtil {
 
     public String generateAccessToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userDetails.getUsername(), accessTokenExpiration);
+        return createToken(claims, userDetails.getUsername(), properties.getAccessTokenExpiration());
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "refresh");
-        return createToken(claims, userDetails.getUsername(), refreshTokenExpiration);
+        return createToken(claims, userDetails.getUsername(), properties.getRefreshTokenExpiration());
     }
 
     public String generateAccessToken(String username, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
-        return createToken(claims, username, accessTokenExpiration);
+        return createToken(claims, username, properties.getAccessTokenExpiration());
     }
 
     private String createToken(Map<String, Object> claims, String subject, Long expiration) {

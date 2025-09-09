@@ -1,239 +1,239 @@
-# Gigalike Microservices - Digital Services Shop
+# 🚀 Gigalike Microservices Platform
 
-A comprehensive microservice architecture for an online shop selling digital services and accounts, built with Spring Boot 3.x and Spring Cloud.
+A complete, production-ready microservices architecture for e-commerce platform built with Spring Boot, Docker, and comprehensive monitoring stack.
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture
 
-The system consists of the following microservices:
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │────│   Nginx Proxy   │────│   API Gateway   │
+│                 │    │   SSL/Load Bal  │    │   (Port 8080)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+                              ┌─────────────────────────┼─────────────────────────┐
+                              │                         │                         │
+                    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+                    │ Config Server   │    │ Eureka Server   │    │   Services      │
+                    │ (Port 8888)     │    │ (Port 8761)     │    │   Cluster       │
+                    └─────────────────┘    └─────────────────┘    └─────────────────┘
+                              │
+                    ┌─────────────────┐
+                    │   .env File     │ ←── Single source of config
+                    │  Config Source  │
+                    └─────────────────┘
+```
 
-### Infrastructure Services
-- **Eureka Server** (Port 8761) - Service Discovery
-- **Config Server** (Port 8888) - Centralized Configuration Management
-- **API Gateway** (Port 8080) - Request Routing & Authentication
+## 🎯 Key Features
 
-### Business Services
-- **Auth Service** (Port 8081) - User Authentication, JWT, OAuth2
-- **Product Service** (Port 8082) - Product CRUD Operations
-- **Order Service** (Port 8083) - Cart & Order Management
-- **Payment Service** (Port 8084) - Payment Processing with MongoDB
-- **Marketing Service** (Port 8085) - Marketing Campaigns & Ads
-- **Notification Service** (Port 8086) - Email & Push Notifications with RabbitMQ
+- ✅ **Centralized Configuration** - All services configured via `.env` file
+- ✅ **Complete Monitoring** - ELK Stack + Prometheus + Grafana
+- ✅ **Object Storage** - MinIO for file storage
+- ✅ **Security Scanning** - Clair for vulnerability scanning
+- ✅ **Health Monitoring** - Uptime Kuma for service health
+- ✅ **Auto Backup** - Automated database backups to S3
+- ✅ **Log Aggregation** - Fluent Bit for centralized logging
+- ✅ **API Documentation** - Swagger UI auto-generated
+- ✅ **SSL/TLS Ready** - Nginx reverse proxy with SSL
+- ✅ **Production Ready** - Blue-green deployment support
 
-### Databases
-- **MySQL** - Auth, Product, Order services
-- **MongoDB** - Payment, Marketing, Notification services
-- **RabbitMQ** - Message Queue for notifications
+## 📦 Services Portfolio
+
+### Core Services
+| Service | Port | Database | Description |
+|---------|------|----------|-------------|
+| 🚪 API Gateway | 8080 | - | Entry point & routing |
+| 🔍 Eureka Server | 8761 | - | Service discovery |
+| ⚙️ Config Server | 8888 | - | Configuration management |
+| 🔐 Auth Service | 8081 | MySQL | Authentication & JWT |
+| 📦 Product Service | 8082 | MySQL | Product catalog |
+| 🛒 Order Service | 8083 | MySQL | Order processing |
+| 💳 Payment Service | 8084 | MongoDB | Payment gateway |
+| 🌐 Platform Service | 8086 | MongoDB + Redis | Notifications & OTP |
+
+### Infrastructure
+| Service | Port | Purpose |
+|---------|------|---------|
+| 🗄️ MySQL | 3306 | Primary database |
+| 🍃 MongoDB | 27017 | Document storage |
+| 🔴 Redis | 6379 | Caching & sessions |
+| 🐰 RabbitMQ | 5672/15672 | Message queue |
+| 💾 MinIO | 9000/9001 | Object storage |
+
+### Monitoring Stack
+| Service | Port | Purpose |
+|---------|------|---------|
+| 📊 Grafana | 3000 | Metrics dashboard |
+| 📈 Prometheus | 9090 | Metrics collection |
+| 🔍 Kibana | 5601 | Log visualization |
+| ⚠️ AlertManager | 9093 | Alert management |
+| 📝 Swagger UI | 8889 | API documentation |
+| ❤️ Uptime Kuma | 3001 | Service health monitoring |
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Java 17
-- Docker & Docker Compose
-- Maven 3.6+
-
-### Running the Application
-
-1. **Clone the repository:**
+### 1. Setup Environment
 ```bash
-git clone <repository-url>
-cd gigalike-microservices
+# Copy environment template
+cp env.example .env
+
+# Edit configuration (REQUIRED)
+nano .env  # or your favorite editor
 ```
 
-2. **Build all services:**
+### 2. Deploy Services
 ```bash
-./build-all.sh
+# Deploy everything
+bash deploy.sh all
+
+# Or deploy specific stacks
+bash deploy.sh core        # Core microservices only
+bash deploy.sh monitoring  # Monitoring stack only
+bash deploy.sh services    # Additional services only
 ```
 
-3. **Start infrastructure & databases:**
+### 3. Check Status
 ```bash
-docker-compose up -d mysql mongodb rabbitmq
+bash deploy.sh status
 ```
-
-4. **Start infrastructure services:**
-```bash
-docker-compose up -d eureka-server config-server
-```
-
-5. **Wait for services to be healthy, then start business services:**
-```bash
-docker-compose up -d api-gateway auth-service product-service order-service payment-service marketing-service notification-service
-```
-
-6. **Access the services:**
-- API Gateway: http://localhost:8080
-- Eureka Dashboard: http://localhost:8761 (eureka/password)
-- RabbitMQ Management: http://localhost:15672 (guest/guest)
-
-## 🛠️ Technology Stack
-
-- **Framework:** Spring Boot 3.2.0, Spring Cloud 2023.0.0
-- **Security:** Spring Security, JWT, OAuth2 (Google)
-- **Databases:** MySQL 8.0, MongoDB 7.0
-- **Message Queue:** RabbitMQ 3.12
-- **Service Discovery:** Netflix Eureka
-- **API Gateway:** Spring Cloud Gateway
-- **Configuration:** Spring Cloud Config
-- **Communication:** OpenFeign
-- **Build Tool:** Maven
-- **Containerization:** Docker
-
-## 📊 API Endpoints
-
-### Auth Service (/api/auth)
-- `POST /register` - User registration
-- `POST /login` - User login
-- `POST /refresh` - Refresh token
-- `POST /logout` - User logout
-- `GET /profile` - Get user profile
-
-### Product Service (/api/products)
-- `GET /` - List products with filters
-- `GET /public` - Public product listing
-- `POST /` - Create product (authenticated)
-- `PUT /{id}` - Update product
-- `DELETE /{id}` - Delete product
-- `GET /category/{category}` - Products by category
-
-### Order Service (/api/orders)
-- `GET /cart` - Get user cart
-- `POST /cart/items` - Add item to cart
-- `PUT /cart/items/{id}` - Update cart item
-- `DELETE /cart/items/{id}` - Remove cart item
-- `POST /` - Create order from cart
-- `GET /` - List user orders
-- `GET /{id}` - Get order details
-
-### Payment Service (/api/payments)
-- `POST /process` - Process payment
-- `GET /history` - Payment history
-- `GET /{id}` - Payment details
-- `POST /webhook` - Payment webhook
-
-## 🔐 Authentication & Authorization
-
-The system uses JWT-based authentication with the following flow:
-
-1. User authenticates via `/api/auth/login` or Google OAuth2
-2. System returns access token (1 hour) and refresh token (7 days)
-3. API Gateway validates tokens for protected endpoints
-4. User information is passed to services via headers (`X-User-Id`, `X-User-Role`)
-
-### Role-based Access:
-- **USER:** Can browse products, manage cart, place orders
-- **ADMIN:** Full access to all resources
-- **MODERATOR:** Can manage products and orders
-
-## 🗂️ Database Schema
-
-### MySQL (Auth Service)
-- `users` - User information
-- `refresh_tokens` - JWT refresh tokens
-
-### MySQL (Product Service)
-- `products` - Product catalog
-- `product_images` - Product images
-- `product_features` - Product features
-
-### MySQL (Order Service)
-- `carts` - Shopping carts
-- `cart_items` - Cart items
-- `orders` - Order information
-- `order_items` - Order line items
-
-### MongoDB Collections
-- **Payment Service:** `payments`, `transactions`, `payment_methods`
-- **Marketing Service:** `campaigns`, `advertisements`, `analytics`
-- **Notification Service:** `notifications`, `templates`, `delivery_logs`
 
 ## 🔧 Configuration
 
-All services use Spring Cloud Config Server for centralized configuration. Configuration files are stored in `/config-server/src/main/resources/config-repo/`.
+### Environment Variables Categories
 
-### Environment Variables
+**🔑 Security & Authentication**
+- JWT secrets and expiration
+- OAuth2 credentials (Google)
+- Database passwords
 
-Key environment variables for Docker deployment:
+**🗄️ Databases**  
+- MySQL connection settings
+- MongoDB credentials
+- Redis configuration
 
-```env
-# Database
-MYSQL_ROOT_PASSWORD=password
-MONGODB_ROOT_PASSWORD=password
+**💳 Payment Integration**
+- Stripe keys (test/live)
+- PayPal credentials
+- Vietnamese payment methods
 
-# JWT
-JWT_SECRET=mySecretKey
+**📧 Communications**
+- SMTP email settings
+- Telegram bot configuration
+- Notification preferences
 
-# OAuth2
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+**🎯 Service URLs**
+- Internal service communication
+- CORS settings
+- Frontend URLs
 
-# Email
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
+**📊 Monitoring**
+- Grafana credentials
+- Prometheus retention
+- Log aggregation settings
 
-# Payment Gateways
-STRIPE_SECRET_KEY=sk_test_...
-PAYPAL_CLIENT_ID=your-paypal-client-id
-```
+## 📊 Monitoring & Observability
 
-## 🧪 Testing
+### Dashboards Access
+- **Grafana**: http://localhost:3000 (admin/admin)
+  - Service metrics, JVM stats, database performance
+- **Kibana**: http://localhost:5601
+  - Centralized logs, error tracking, audit trails
+- **Prometheus**: http://localhost:9090
+  - Raw metrics, query interface, alert rules
 
-Run tests for all services:
+### Health Checks
 ```bash
-./mvnw test
+# API Gateway health
+curl http://localhost:8080/actuator/health
+
+# Individual service health
+curl http://localhost:8081/api/health  # Auth
+curl http://localhost:8082/api/health  # Product
+curl http://localhost:8083/api/health  # Order
+curl http://localhost:8084/api/health  # Payment
+curl http://localhost:8086/api/health  # Platform
 ```
 
-## 📝 API Documentation
+## 🔒 Security Features
 
-Once the services are running, API documentation is available at:
-- Swagger UI: http://localhost:8080/swagger-ui.html
-- OpenAPI Spec: http://localhost:8080/v3/api-docs
+- **JWT Authentication** with refresh token rotation
+- **OAuth2 Integration** (Google Sign-In)
+- **API Rate Limiting** via API Gateway
+- **Container Security Scanning** with Clair
+- **SSL/TLS Termination** at Nginx layer
+- **Network Isolation** via Docker networks
+- **Secret Management** via environment variables
 
-## 🚀 Deployment
+## 💾 Backup & Recovery
 
-### Development
 ```bash
-docker-compose up -d
+# Manual backup
+docker exec gigalike-backup /backup.sh
+
+# Automated backups run daily at 2 AM
+# Backups stored in S3 bucket (configure in .env)
 ```
 
-### Production
-For production deployment, consider:
-- Using external databases (AWS RDS, MongoDB Atlas)
-- Implementing proper secrets management
-- Setting up monitoring (Prometheus, Grafana)
-- Configuring load balancers
-- Setting up CI/CD pipelines
+## 🚦 Production Deployment
 
-## 📊 Monitoring & Health Checks
+### Prerequisites
+- Docker & Docker Compose
+- Valid SSL certificates
+- S3 bucket for backups
+- External database (recommended)
+- Load balancer (for multi-instance)
 
-All services include:
-- Spring Boot Actuator endpoints
-- Health checks in Docker containers
-- Centralized logging
-- Metrics collection ready for Prometheus
+### Production Checklist
+- [ ] Update all default passwords
+- [ ] Configure proper JWT secrets (32+ chars)
+- [ ] Set up SSL certificates
+- [ ] Configure external databases
+- [ ] Set up S3 backup bucket
+- [ ] Configure monitoring alerts
+- [ ] Test disaster recovery procedures
 
-Access health endpoints:
-- http://localhost:8080/actuator/health (API Gateway)
-- http://localhost:8081/actuator/health (Auth Service)
-- etc.
+## 🛠️ Development
+
+### Local Development
+```bash
+# Start infrastructure only
+docker-compose up -d mysql mongodb redis rabbitmq eureka-server config-server
+
+# Run services in your IDE for debugging
+# Services will automatically register with Eureka
+```
+
+### API Testing
+```bash
+# Register new user
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","email":"test@example.com","password":"password123","firstName":"Test","lastName":"User"}'
+
+# Login
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"password123"}'
+```
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
-## 📄 License
+## 📜 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-For support and questions:
-- Create an issue in the repository
-- Contact the development team
-- Check the documentation wiki
+- 📧 Email: support@gigalike.com
+- 📖 Wiki: [Project Wiki](https://github.com/gigalike/microservices/wiki)
+- 🐛 Issues: [GitHub Issues](https://github.com/gigalike/microservices/issues)
+- 💬 Discord: [Community Server](https://discord.gg/gigalike)
 
 ---
 
-**Built with ❤️ using Spring Boot & Spring Cloud**
+Made with ❤️ by the Gigalike Team

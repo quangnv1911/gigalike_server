@@ -31,7 +31,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         String lastName = oauth2User.getAttribute("family_name");
         String profilePicture = oauth2User.getAttribute("picture");
 
-        Optional<User> existingUser = userRepository.findByGoogleId(googleId);
+        Optional<User> existingUser = userRepository.findByEmail(email);
         
         if (existingUser.isEmpty()) {
             // Check if user exists with same email
@@ -40,7 +40,6 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
             if (existingUser.isPresent()) {
                 // Link Google account to existing user
                 User user = existingUser.get();
-                user.setGoogleId(googleId);
                 if (user.getAvatar() == null) {
                     user.setAvatar(profilePicture);
                 }
@@ -50,7 +49,6 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                 User newUser = User.builder()
                         .username(email) // Use email as username for OAuth users
                         .email(email)
-                        .googleId(googleId)
                         .firstName(firstName)
                         .lastName(lastName)
                         .avatar(profilePicture)

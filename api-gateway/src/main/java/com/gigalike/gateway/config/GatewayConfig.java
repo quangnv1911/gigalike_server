@@ -1,7 +1,9 @@
 package com.gigalike.gateway.config;
 
 import com.gigalike.gateway.filter.AuthenticationFilter;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -9,9 +11,9 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class GatewayConfig {
-
-    private final AuthenticationFilter authFilter;
+    AuthenticationFilter authFilter;
 
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {

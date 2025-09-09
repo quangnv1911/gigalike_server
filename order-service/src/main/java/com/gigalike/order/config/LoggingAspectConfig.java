@@ -24,7 +24,7 @@ import java.util.Map;
 @Slf4j
 @Component
 public class LoggingAspectConfig {
-    @Around("execution(* com.gigalike.auth.controller..*(..)))")
+    @Around("execution(* com.gigalike.order.controller..*(..)))")
     public Object profileAllMethods(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder
                 .currentRequestAttributes()).getRequest();
