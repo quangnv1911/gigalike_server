@@ -1,0 +1,43 @@
+server:
+  port: ${PLATFORM_SERVICE_PORT}
+
+spring:
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI_PLATFORM}
+      auto-index-creation: true
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+
+feign:
+  auth-service:
+    url: ${AUTH_SERVICE_URL}
+
+otp:
+  expire_time: ${OTP_EXPIRE_TIME}
+  length:  ${OTP_LENGTH}
+redis:
+  host: ${REDIS_HOST}
+  port:  ${REDIS_PORT}
+notification:
+  discord:
+
+  email:
+    from: ${NOTIFICATION_EMAIL_FROM}
+  telegram:
+    token: ${TELEGRAM_BOT_TOKEN}
+    restaurant-group: ${TELEGRAM_GROUP_ID}

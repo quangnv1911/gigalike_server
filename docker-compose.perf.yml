@@ -1,0 +1,85 @@
+version: '3.8'
+
+# Docker Compose for Performance Testing
+services:
+  # Lightweight setup for performance testing
+  mysql-perf:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: perfpass
+      MYSQL_DATABASE: gigalike_perf
+    tmpfs:
+      - /var/lib/mysql
+    networks:
+      - gigalike-perf
+
+  eureka-server-perf:
+    image: gigalike/eureka-server:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: perf
+    ports:
+      - "8761:8761"
+    networks:
+      - gigalike-perf
+
+  api-gateway-perf:
+    image: gigalike/api-gateway:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: perf
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server-perf:8761/eureka/
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server-perf
+    networks:
+      - gigalike-perf
+
+  auth-service-perf:
+    image: gigalike/auth-service:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: perf
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-perf:3306/gigalike_perf
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: perfpass
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server-perf:8761/eureka/
+    depends_on:
+      - mysql-perf
+      - eureka-server-perf
+    networks:
+      - gigalike-perf
+
+  platform-service-perf:
+    image: gigalike/platform-service:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: perf
+      SPRING_DATA_MONGODB_URI: mongodb://admin:perfpass@mongodb-perf:27017/gigalike_perf?authSource=admin
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server-perf:8761/eureka/
+      REDIS_HOST: redis-perf
+      REDIS_PORT: 6379
+    depends_on:
+      - mongodb-perf
+      - redis-perf
+      - eureka-server-perf
+    networks:
+      - gigalike-perf
+
+  mongodb-perf:
+    image: mongo:7.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: perfpass
+    tmpfs:
+      - /data/db
+    networks:
+      - gigalike-perf
+
+  redis-perf:
+    image: redis:7.2-alpine
+    tmpfs:
+      - /data
+    networks:
+      - gigalike-perf
+
+networks:
+  gigalike-perf:
+    driver: bridge

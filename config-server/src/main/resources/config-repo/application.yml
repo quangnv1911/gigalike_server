@@ -1,0 +1,30 @@
+# Global configuration for all services
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS}
+    lease-renewal-interval-in-seconds: ${EUREKA_LEASE_RENEWAL_INTERVAL}
+    lease-expiration-duration-in-seconds: ${EUREKA_LEASE_EXPIRATION_DURATION}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud: ${LOG_LEVEL}
+    com.gigalike: ${LOG_LEVEL}
+
+spring:
+  jackson:
+    deserialization.FAIL_ON_UNKNOWN_PROPERTIES: false
+    time-zone: ${TIMEZONE}

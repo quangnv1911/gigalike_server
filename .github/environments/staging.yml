@@ -1,0 +1,33 @@
+# Staging Environment Configuration
+name: staging
+url: https://staging.gigalike.com
+
+# Protection rules
+protection_rules:
+  required_reviewers: []
+  wait_timer: 0
+  prevent_self_review: false
+
+# Environment variables
+variables:
+  ENVIRONMENT: staging
+  LOG_LEVEL: DEBUG
+  DATABASE_HOST: staging-db.gigalike.com
+  API_BASE_URL: https://staging-api.gigalike.com
+
+# Secrets (to be configured in GitHub repository settings)
+secrets:
+  - STAGING_MYSQL_PASSWORD
+  - STAGING_MONGODB_PASSWORD
+  - STAGING_JWT_SECRET
+  - STAGING_GOOGLE_CLIENT_ID
+  - STAGING_GOOGLE_CLIENT_SECRET
+  - STAGING_MAIL_USERNAME
+  - STAGING_MAIL_PASSWORD
+  - STAGING_STRIPE_SECRET_KEY
+  - STAGING_PAYPAL_CLIENT_ID
+  - STAGING_PAYPAL_CLIENT_SECRET
+  - STAGING_HOST
+  - STAGING_USERNAME
+  - STAGING_SSH_KEY
+  - STAGING_PORT

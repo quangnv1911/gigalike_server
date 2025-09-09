@@ -1,0 +1,28 @@
+server:
+  port: ${PAYMENT_SERVICE_PORT}
+
+spring:
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI_PAYMENT}
+      auto-index-creation: true
+
+feign:
+  auth-service:
+    url: ${AUTH_SERVICE_URL}
+  order-service:
+    url: ${ORDER_SERVICE_URL}
+  platform-service:
+    url: ${PLATFORM_SERVICE_URL}
+
+payment:
+  method:
+    mb-bank: ${PAYMENT_METHOD_MB_BANK}
+    viettin-bank: ${PAYMENT_METHOD_VIETTIN}
+  stripe:
+    public-key: ${STRIPE_PUBLIC_KEY:pk_test_}
+    secret-key: ${STRIPE_SECRET_KEY:sk_test_}
+  paypal:
+    client-id: ${PAYPAL_CLIENT_ID:your-paypal-client-id}
+    client-secret: ${PAYPAL_CLIENT_SECRET:your-paypal-client-secret}
+    mode: ${PAYPAL_MODE:sandbox}

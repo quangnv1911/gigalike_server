@@ -1,0 +1,14 @@
+server:
+  port: ${MARKETING_SERVER_PORT}
+
+spring:
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI_MARKETING}}
+      auto-index-creation: true
+
+feign:
+  auth-service:
+    url: ${AUTH_SERVICE_URL}
+  platform-service:
+    url: ${PLATFORM_SERVICE_URL}

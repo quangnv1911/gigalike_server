@@ -1,0 +1,82 @@
+version: '3.8'
+
+# Docker Compose for Integration Testing
+services:
+  mysql-test:
+    image: mysql:8.0
+    container_name: gigalike-mysql-test
+    environment:
+      MYSQL_ROOT_PASSWORD: testpassword
+      MYSQL_DATABASE: gigalike_test
+    ports:
+      - "33060:3306"
+    volumes:
+      - mysql_test_data:/var/lib/mysql
+    networks:
+      - gigalike-test
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  mongodb-test:
+    image: mongo:7.0
+    container_name: gigalike-mongodb-test
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: testpassword
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_test_data:/data/db
+    networks:
+      - gigalike-test
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  rabbitmq-test:
+    image: rabbitmq:3.12-management
+    container_name: gigalike-rabbitmq-test
+    environment:
+      RABBITMQ_DEFAULT_USER: test
+      RABBITMQ_DEFAULT_PASS: testpassword
+    ports:
+      - "56720:5672"
+      - "156720:15672"
+    volumes:
+      - rabbitmq_test_data:/var/lib/rabbitmq
+    networks:
+      - gigalike-test
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  redis-test:
+    image: redis:7.2-alpine
+    container_name: gigalike-redis-test
+    ports:
+      - "63790:6379"
+    volumes:
+      - redis_test_data:/data
+    networks:
+      - gigalike-test
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_test_data:
+  mongodb_test_data:
+  rabbitmq_test_data:
+  redis_test_data:
+
+networks:
+  gigalike-test:
+    driver: bridge

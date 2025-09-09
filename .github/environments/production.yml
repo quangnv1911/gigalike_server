@@ -1,0 +1,37 @@
+# Production Environment Configuration
+name: production
+url: https://gigalike.com
+
+# Protection rules
+protection_rules:
+  required_reviewers:
+    - team:platform-team
+    - user:tech-lead
+  wait_timer: 5 # 5 minutes wait time
+  prevent_self_review: true
+
+# Environment variables
+variables:
+  ENVIRONMENT: production
+  LOG_LEVEL: INFO
+  DATABASE_HOST: prod-db.gigalike.com
+  API_BASE_URL: https://api.gigalike.com
+
+# Secrets (to be configured in GitHub repository settings)
+secrets:
+  - PROD_MYSQL_PASSWORD
+  - PROD_MONGODB_PASSWORD
+  - PROD_JWT_SECRET
+  - PROD_GOOGLE_CLIENT_ID
+  - PROD_GOOGLE_CLIENT_SECRET
+  - PROD_MAIL_USERNAME
+  - PROD_MAIL_PASSWORD
+  - PROD_STRIPE_SECRET_KEY
+  - PROD_PAYPAL_CLIENT_ID
+  - PROD_PAYPAL_CLIENT_SECRET
+  - PROD_HOST
+  - PROD_USERNAME
+  - PROD_SSH_KEY
+  - PROD_PORT
+  - PRODUCTION_APPROVERS
+  - MONITORING_WEBHOOK

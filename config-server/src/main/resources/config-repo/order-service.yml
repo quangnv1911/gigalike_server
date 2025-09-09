@@ -1,0 +1,25 @@
+server:
+  port: ${ORDER_SERVICE_PORT}
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL_ORDER}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO}
+    show-sql: ${JPA_SHOW_SQL}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+
+feign:
+  auth-service:
+    url: ${AUTH_SERVICE_URL}
+  product-service:
+    url: ${PRODUCT_SERVICE_URL}
+  payment-service:
+    url: ${PAYMENT_SERVICE_URL}

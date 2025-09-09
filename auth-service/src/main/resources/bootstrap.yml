@@ -1,0 +1,10 @@
+spring:
+  profiles.active: local
+  application:
+    name: auth-service
+  cloud:
+    config:
+      uri: http://localhost:8888
+      username: config
+      password: configpass
+      fail-fast: true

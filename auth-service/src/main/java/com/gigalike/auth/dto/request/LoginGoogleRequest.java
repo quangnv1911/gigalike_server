@@ -1,0 +1,11 @@
+package com.gigalike.auth.dto.request;
+
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class LoginGoogleRequest {
+    @NotBlank(message = "Login failed, something is missing")
+    private String idToken;
+}
