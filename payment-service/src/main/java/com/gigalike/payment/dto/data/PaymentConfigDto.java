@@ -27,20 +27,23 @@ public class PaymentConfigDto {
     @Nullable
     UUID id;
     String bankName;
+
+    String bankBin;
     String cardNumber;
     String userName;
     boolean isEnable;
     @Enumerated(EnumType.STRING)
     PaymentType paymentType;
 
-    public static PaymentConfigDto fromPaymentConfig(PaymentConfig user) {
+    public static PaymentConfigDto fromPaymentConfig(PaymentConfig paymentConfig) {
         return PaymentConfigDto.builder()
-                .id(user.getId())
-                .bankName(user.getBankName())
-                .cardNumber(user.getCardNumber())
-                .userName(user.getUserName())
-                .isEnable(user.isEnabled())
-                .paymentType(user.getPaymentType())
+                .id(paymentConfig.getId())
+                .bankBin(paymentConfig.getBankBin())
+                .bankName(paymentConfig.getBankName())
+                .cardNumber(paymentConfig.getCardNumber())
+                .userName(paymentConfig.getUserName())
+                .isEnable(paymentConfig.isEnabled())
+                .paymentType(paymentConfig.getPaymentType())
                 .build();
     }
 }

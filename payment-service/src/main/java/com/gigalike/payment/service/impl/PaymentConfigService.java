@@ -1,19 +1,25 @@
 package com.gigalike.payment.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gigalike.payment.dto.data.BankInfoDto;
 import com.gigalike.payment.dto.data.CassoConfigDto;
 import com.gigalike.payment.dto.data.PaymentConfigDto;
+import com.gigalike.payment.dto.response.BankInfoListResponse;
 import com.gigalike.payment.entity.PaymentConfig;
 import com.gigalike.payment.repository.PaymentConfigRepository;
 import com.gigalike.payment.service.IPaymentConfigService;
 import com.gigalike.shared.exception.NotFoundException;
+import com.gigalike.shared.util.HttpUtil;
+import com.gigalike.shared.util.PaymentUtil;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +30,7 @@ import java.util.UUID;
 public class PaymentConfigService implements IPaymentConfigService {
     PaymentConfigRepository paymentConfigRepository;
     ObjectMapper objectMapper;
+    HttpUtil httpUtil;
 
     @Override
     @Transactional
@@ -77,6 +84,22 @@ public class PaymentConfigService implements IPaymentConfigService {
             log.error("Could not parse CassoConfigDto from PaymentConfig with id {}", paymentConfig.getId());
             throw new IllegalArgumentException("Invalid config JSON for payment id " + paymentConfig.getId(), e);
         }
+    }
+
+    @Override
+    public List<BankInfoDto> getAllBankInfo() {
+        BankInfoListResponse response = httpUtil.callAPI(
+                PaymentUtil.urlGetBankInfo,
+                null,
+                HttpMethod.GET,
+                null,
+                BankInfoListResponse.class
+        );
+
+        if (response != null && "00".equals(response.getCode())) {
+            return response.getData();
+        }
+        return Collections.emptyList();
     }
 
     @Override

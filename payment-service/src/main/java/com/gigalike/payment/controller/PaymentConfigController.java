@@ -26,6 +26,12 @@ public class PaymentConfigController {
         return ResponseEntity.ok(ApiResponse.success("Get all payment method successfully", response));
     }
 
+    @GetMapping("/bank-info")
+    public ResponseEntity<ApiResponse<?>> getAllBankInfo() {
+        var response = paymentConfigService.getAllBankInfo();
+        return ResponseEntity.ok(ApiResponse.success("Get all bank info successfully", response));
+    }
+
     @PostMapping("/")
     public ResponseEntity<ApiResponse<?>> createPaymentConfig(@Valid @RequestBody PaymentConfigDto paymentDto) {
         var response = paymentConfigService.createPaymentConfig(paymentDto);

@@ -1,5 +1,6 @@
 package com.gigalike.payment.service;
 
+import com.gigalike.payment.dto.data.BankInfoDto;
 import com.gigalike.payment.dto.data.CassoConfigDto;
 import com.gigalike.payment.dto.data.PaymentConfigDto;
 import com.gigalike.payment.entity.PaymentConfig;
@@ -14,4 +15,5 @@ public interface IPaymentConfigService {
     List<PaymentConfigDto> getAllPaymentConfig();
     PaymentConfigDto getPaymentConfigById(UUID paymentConfigId);
     CassoConfigDto parseCassoConfig(UUID paymentConfigId);
+    List<BankInfoDto> getAllBankInfo();
 }

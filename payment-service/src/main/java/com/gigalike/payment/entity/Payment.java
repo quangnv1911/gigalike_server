@@ -12,6 +12,7 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
@@ -25,9 +26,7 @@ import java.util.UUID;
 @SQLRestriction("is_deleted = false")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Payment extends BaseEntity {
-    String amount;
-
-    UUID orderId;
+    BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     PaymentType paymentType;

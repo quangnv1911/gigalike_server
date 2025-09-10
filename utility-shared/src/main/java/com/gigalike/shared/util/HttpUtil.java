@@ -2,11 +2,12 @@ package com.gigalike.shared.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gigalike.shared.exception.HttpException;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -15,7 +16,12 @@ import java.util.Map;
 
 @Slf4j
 @Component
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class HttpUtil {
+    RestTemplate restTemplate;
+    ObjectMapper objectMapper;
+
     /**
      * Call post api
      *
@@ -42,42 +48,63 @@ public class HttpUtil {
         return callAPI(url, header, method, requestBody, responseClass);
     }
 
-    public <T> T callAPI(String url, Map<String, String> mapHeader, HttpMethod method, Object requestBody, Class<T> responseClass) throws HttpException {
-        T response = null;
+    /**
+     * Hàm gọi API chung
+     *
+     * @param url           endpoint cần call
+     * @param mapHeader     header gửi kèm
+     * @param method        GET/POST/PUT/DELETE
+     * @param requestBody   body request (String, Map hoặc Object)
+     * @param responseClass kiểu dữ liệu trả về
+     * @return dữ liệu response parse sang responseClass
+     */
+    public <T> T callAPI(
+            String url,
+            Map<String, String> mapHeader,
+            HttpMethod method,
+            Object requestBody,
+            Class<T> responseClass
+    ) {
         try {
+            // Chuẩn bị header
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
             if (mapHeader != null) {
                 mapHeader.forEach(httpHeaders::set);
             }
 
+            // Chuẩn bị body
             HttpEntity<String> httpEntity;
             if (requestBody != null) {
                 String body;
-                if (requestBody instanceof Map) {
-                    ObjectMapper mapper = new ObjectMapper();
-                    body = mapper.writeValueAsString(requestBody);
+                if (requestBody instanceof String) {
+                    body = (String) requestBody;
                 } else {
-                    body = requestBody.toString();
+                    body = objectMapper.writeValueAsString(requestBody);
                 }
-
                 httpEntity = new HttpEntity<>(body, httpHeaders);
             } else {
                 httpEntity = new HttpEntity<>(httpHeaders);
             }
-            RestTemplate restTemplate = new RestTemplate();
-            if (HttpMethod.POST.equals(method)) {
-                response = restTemplate.postForObject(url, httpEntity, responseClass);
-            } else {
-                response = restTemplate.exchange(url, method, httpEntity, responseClass).getBody();
-            }
-            assert response != null;
-            log.info(response.toString());
+
+            // Gọi API
+            ResponseEntity<T> responseEntity = restTemplate.exchange(
+                    url,
+                    method,
+                    httpEntity,
+                    responseClass
+            );
+
+            T response = responseEntity.getBody();
+            log.info("Call API {} {} -> {}", method, url, response);
+
+            return response;
+
         } catch (Exception ex) {
-            log.error("Call external API Exception: ", ex);
-            throw new HttpException("call API lỗi " + url);
+            log.error("Call external API exception: {} {}", method, url, ex);
+            throw new RuntimeException("Call API lỗi: " + url, ex);
         }
-        return response;
     }
 
     public static String callPostAPIByToken(String url, String requestBody, String token) {

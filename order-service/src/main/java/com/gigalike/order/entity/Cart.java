@@ -1,55 +1,31 @@
 package com.gigalike.order.entity;
 
+import com.gigalike.order.base.BaseEntity;
+import com.gigalike.shared.converter.StringListConverter;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "carts")
-public class Cart {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+public class Cart extends BaseEntity {
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    Long userId;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<CartItem> items;
+    @Column(name = "product_items", columnDefinition = "json")
+    @Convert(converter = StringListConverter.class)
+    List<UUID> productItems;
 
     @Column(name = "total_amount", precision = 10, scale = 2)
-    private BigDecimal totalAmount = BigDecimal.ZERO;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    public void calculateTotalAmount() {
-        this.totalAmount = items.stream()
-                .map(CartItem::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
+    BigDecimal totalAmount = BigDecimal.ZERO;
 }

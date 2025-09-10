@@ -24,6 +24,7 @@ public class PaymentConfig extends BaseEntity {
 
     String cardNumber;
 
+    String bankBin;
     String userName;
 
     boolean enabled = true;
