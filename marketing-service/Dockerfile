@@ -1,18 +1,14 @@
-FROM maven:3.9.8-eclipse-temurin-17 AS builder
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
-
 FROM openjdk:17-jdk-slim
 
 WORKDIR /app
+# Install curl (needed for HEALTHCHECK)
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy the JAR file
-COPY --from=builder target/marketing-service-*.jar app.jar
+COPY target/marketing-service-*.jar app.jar
 
 # Expose port
-EXPOSE 8082
+EXPOSE 8085
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

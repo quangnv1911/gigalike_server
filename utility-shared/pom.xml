@@ -14,6 +14,18 @@
     <name>Utility Shared Module</name>
     <description>Shared utilities for all microservices</description>
 
+    <distributionManagement>
+        <repository>
+            <id>nexus</id>
+            <url>http://nexus.company.com/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus</id>
+            <url>http://nexus.company.com/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+
     <dependencies>
         <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
         <dependency>
