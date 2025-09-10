@@ -2,15 +2,16 @@ package com.gigalike.shared.dto;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.gigalike.shared.constant.SortBy;
+import com.gigalike.shared.constant.SortDirection;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -18,14 +19,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 @JsonAutoDetect(
         getterVisibility = JsonAutoDetect.Visibility.NONE
 )
-public class PageRequest {
+public class PageRequestCustom {
     int page;
 
     int size;
 
+    String sortBy;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    SortBy sortBy = SortBy.DESC;
-
-    String sortDirection;
+    SortDirection sortDirection = SortDirection.DESC;
 }

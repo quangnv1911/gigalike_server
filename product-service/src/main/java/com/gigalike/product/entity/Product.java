@@ -1,6 +1,7 @@
 package com.gigalike.product.entity;
 
 import com.gigalike.product.base.BaseEntity;
+import com.gigalike.shared.converter.StringListConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -26,8 +27,9 @@ public class Product extends BaseEntity {
     @Builder.Default
     BigDecimal price = BigDecimal.valueOf(0);
 
-    @Column(name = "image")
-    String image;
+    @Column(name = "images", columnDefinition = "json")
+    @Convert(converter = StringListConverter.class)
+    List<String> images;
 
     @Column(name = "description", columnDefinition = "Text")
     String description;
@@ -39,9 +41,12 @@ public class Product extends BaseEntity {
     @Builder.Default
     Integer totalSold = 0;
 
+    @Column(name = "stock_quantity")
+    @Builder.Default
+    Integer stockQuantity = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     Category category;
-
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     Set<ProductDetail> details;

@@ -36,8 +36,6 @@ public class ProductDetail extends BaseEntity {
     @Column(name = "user_id", nullable = false)
     UUID userId;
 
-
-    @ManyToOne
-    @JoinColumn(name = "order_detail_id")
-    OrderDetail orderDetail;
+    @Column(name = "order_detail_id", nullable = false)
+    UUID orderDetailId;
 }

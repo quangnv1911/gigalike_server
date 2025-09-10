@@ -20,8 +20,8 @@ services:
     image: mongo:7.0
     container_name: gigalike-mongodb
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     ports:
       - "${MONGO_PORT:-27017}:27017"
     volumes:
@@ -33,11 +33,11 @@ services:
     image: rabbitmq:3.12-management
     container_name: gigalike-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -47,7 +47,7 @@ services:
     image: redis:7.2-alpine
     container_name: gigalike-redis
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${REDIS_PORT}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -58,12 +58,12 @@ services:
     image: minio/minio:latest
     container_name: gigalike-minio
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-password123}
-      MINIO_BROWSER_REDIRECT_URL: http://localhost:${MINIO_CONSOLE_PORT:-9001}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:${MINIO_CONSOLE_PORT}
     ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
     volumes:
       - minio_data:/data
     networks:
@@ -82,7 +82,7 @@ services:
       dockerfile: Dockerfile
     container_name: gigalike-eureka
     ports:
-      - "${EUREKA_SERVER_PORT:-8761}:8761"
+      - "${EUREKA_SERVER_PORT}:8761"
     depends_on:
       config-server:
         condition: service_healthy
@@ -102,7 +102,7 @@ services:
       dockerfile: Dockerfile
     container_name: gigalike-config-server
     ports:
-      - "${CONFIG_SERVER_PORT:-8888}:8888"
+      - "${CONFIG_SERVER_PORT}:8888"
     networks:
       - gigalike-network
     healthcheck:
@@ -119,7 +119,7 @@ services:
       dockerfile: Dockerfile
     container_name: gigalike-api-gateway
     ports:
-      - "${API_GATEWAY_PORT:-8080}:8080"
+      - "${API_GATEWAY_PORT}:8080"
     depends_on:
       config-server:
         condition: service_healthy
@@ -135,7 +135,7 @@ services:
       dockerfile: Dockerfile
     container_name: gigalike-auth-service
     ports:
-      - "${AUTH_SERVICE_PORT:-8081}:8081"
+      - "${AUTH_SERVICE_PORT}:8081"
     depends_on:
       - mysql
       - config-server
@@ -149,7 +149,7 @@ services:
       dockerfile: Dockerfile
     container_name: gigalike-product-service
     ports:
-      - "${PRODUCT_SERVICE_PORT:-8082}:8082"
+      - "${PRODUCT_SERVICE_PORT}:8082"
     depends_on:
       - mysql
       - config-server
@@ -158,45 +158,58 @@ services:
       - gigalike-network
 
 
-#  order-service:
-#    build:
-#      context: ./order-service
-#      dockerfile: Dockerfile
-#    container_name: gigalike-order-service
-#    ports:
-#      - "${ORDER_SERVICE_PORT:-8083}:8083"
-#    depends_on:
-#      - mysql
-#      - config-server
-#      - eureka-server
-#    networks:
-#      - gigalike-network
-#
-#  payment-service:
-#    build:
-#      context: ./payment-service
-#      dockerfile: Dockerfile
-#    container_name: gigalike-payment-service
-#    ports:
-#      - "${PAYMENT_SERVICE_PORT:-8084}:8084"
-#    depends_on:
-#      - mongodb
-#      - config-server
-#      - eureka-server
-#    networks:
-#      - gigalike-network
-#
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: gigalike-order-service
+    ports:
+      - "${ORDER_SERVICE_PORT}:8083"
+    depends_on:
+      - mysql
+      - config-server
+      - eureka-server
+    networks:
+      - gigalike-network
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: gigalike-payment-service
+    ports:
+      - "${PAYMENT_SERVICE_PORT}:8084"
+    depends_on:
+      - mongodb
+      - config-server
+      - eureka-server
+    networks:
+      - gigalike-network
+
   platform-service:
     build:
       context: ./platform-service
       dockerfile: Dockerfile
     container_name: gigalike-platform-service
     ports:
-      - "${PLATFORM_SERVICE_PORT:-8086}:8086"
+      - "${PLATFORM_SERVICE_PORT}:8086"
     depends_on:
       - mongodb
       - rabbitmq
       - redis
+      - config-server
+      - eureka-server
+    networks:
+      - gigalike-network
+
+  marketing-service:
+    build:
+      context: ./marketing-service
+      dockerfile: Dockerfile
+    container_name: gigalike-marketing-service
+    ports:
+      - "${MARKETING_SERVER_PORT}:8085"
+    depends_on:
       - config-server
       - eureka-server
     networks:

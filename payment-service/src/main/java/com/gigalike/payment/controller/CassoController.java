@@ -30,6 +30,6 @@ public class CassoController {
         var cassoDto = paymentConfigService.parseCassoConfig(paymentConfigId);
         cassoService.validateCassoKey(cassoDto.getKey(), signature);
         cassoService.handleCassoWebhook(cassoWebhookRequest);
-        return ResponseEntity.ok(ApiResponse.success("Get all payment method successfully", response));
+        return ResponseEntity.ok(ApiResponse.success("Get all payment method successfully", null));
     }
 }

@@ -9,13 +9,14 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductDto {
-    private Long id;
+    private UUID id;
     private String name;
     private String description;
     private BigDecimal price;
@@ -25,7 +26,7 @@ public class ProductDto {
     private Boolean isDigital;
     private List<String> imageUrls;
     private List<String> features;
-    private Long createdBy;
+    private String createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -35,12 +36,9 @@ public class ProductDto {
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
-                .category(product.getCategory().name())
-                .status(product.getStatus().name())
+                .category(product.getCategory().getName())
                 .stockQuantity(product.getStockQuantity())
-                .isDigital(product.getIsDigital())
-                .imageUrls(product.getImageUrls())
-                .features(product.getFeatures())
+                .imageUrls(product.getImages())
                 .createdBy(product.getCreatedBy())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())

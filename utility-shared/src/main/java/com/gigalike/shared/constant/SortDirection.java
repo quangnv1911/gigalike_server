@@ -1,6 +1,6 @@
 package com.gigalike.shared.constant;
 
-public enum SortBy {
+public enum SortDirection {
     DESC,
     ASC
 }
