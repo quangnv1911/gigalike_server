@@ -9,7 +9,10 @@ import java.util.UUID;
 public interface ICouponService {
     PageResponse<CouponResponse> getCoupons(CouponSearchRequest couponSearchRequest);
     CouponResponse getCouponById(UUID couponId);
+    CouponResponse getCouponDetailByCouponCode(String couponCode);
     CouponResponse createCoupon(CouponRequest newCoupon);
     CouponResponse updateCoupon(UUID couponId, CouponRequest newCoupon);
     void deleteCouponById(UUID couponId);
+
+    void addNewCouponUsed(String couponCode);
 }

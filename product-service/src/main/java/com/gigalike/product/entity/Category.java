@@ -5,6 +5,8 @@ import com.gigalike.shared.constant.BigCategory;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.Set;
 
@@ -16,6 +18,8 @@ import java.util.Set;
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "categories")
+@SQLDelete(sql = "UPDATE categories SET is_delete = true WHERE id = ?")
+@SQLRestriction("is_deleted = false")
 public class Category extends BaseEntity {
     @Column(name = "name")
     String name;

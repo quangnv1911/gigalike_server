@@ -1,5 +1,6 @@
 package com.gigalike.auth.controller;
 
+import com.gigalike.auth.dto.request.UpdateUserAmount;
 import com.gigalike.auth.dto.request.UpdateUserRequest;
 import com.gigalike.auth.dto.response.AuthResponse;
 import com.gigalike.auth.service.IUserService;
@@ -15,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
@@ -37,5 +38,11 @@ public class UserController {
     public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable UUID userId, @RequestBody UpdateUserRequest updateUserRequest) {
         userService.updateUserInfo(userId, updateUserRequest);
         return ResponseEntity.ok(ApiResponse.success("User account has been updated successfully", updateUserRequest));
+    }
+
+    @PutMapping("/amount/{userName}")
+    public ResponseEntity<ApiResponse<?>> updateUserAmount(@PathVariable String userName, @RequestBody UpdateUserAmount updateUserAmount) {
+        userService.updateUserAmount(userName, updateUserAmount);
+        return ResponseEntity.ok(ApiResponse.success("User account has been updated successfully", updateUserAmount));
     }
 }

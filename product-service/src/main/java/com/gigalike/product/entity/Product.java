@@ -5,11 +5,14 @@ import com.gigalike.shared.converter.StringListConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -18,11 +21,15 @@ import java.util.Set;
 @AllArgsConstructor
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "products")
+@Table(name = "product")
+@SQLDelete(sql = "UPDATE product SET is_delete = true WHERE id = ?")
+@SQLRestriction("is_deleted = false")
 public class Product extends BaseEntity {
     @Column(name = "name", nullable = false)
     String name;
 
+    // giá tiền chung để hiển thị lên trang web
+    // giá iền thực tế sẽ lấy từ productDurations
     @Column(name = "price", nullable = false)
     @Builder.Default
     BigDecimal price = BigDecimal.valueOf(0);
@@ -34,8 +41,8 @@ public class Product extends BaseEntity {
     @Column(name = "description", columnDefinition = "Text")
     String description;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    List<ProductDuration> durations;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<ProductDuration> productDurations;
 
     @Column(name = "total_sold")
     @Builder.Default
@@ -50,6 +57,4 @@ public class Product extends BaseEntity {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     Set<ProductDetail> details;
-
-
 }

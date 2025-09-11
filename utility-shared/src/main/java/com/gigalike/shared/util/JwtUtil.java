@@ -1,6 +1,7 @@
 package com.gigalike.shared.util;
 
 import com.gigalike.shared.config.JwtProperties;
+import com.gigalike.shared.dto.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -19,6 +20,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Slf4j
@@ -57,9 +59,11 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateAccessToken(UserDetails userDetails) {
+    public String generateAccessToken(UUID userId, String roleName, String userName) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userDetails.getUsername(), properties.getAccessTokenExpiration());
+        claims.put("userId", userId);
+        claims.put("role", roleName);
+        return createToken(claims, userName, properties.getAccessTokenExpiration());
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
@@ -68,11 +72,6 @@ public class JwtUtil {
         return createToken(claims, userDetails.getUsername(), properties.getRefreshTokenExpiration());
     }
 
-    public String generateAccessToken(String username, String role) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);
-        return createToken(claims, username, properties.getAccessTokenExpiration());
-    }
 
     private String createToken(Map<String, Object> claims, String subject, Long expiration) {
         return Jwts.builder()
@@ -96,6 +95,11 @@ public class JwtUtil {
             log.error("Token validation failed: {}", e.getMessage());
             return false;
         }
+    }
+
+    public UUID extractUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        return claims.get("userId", UUID.class);
     }
 
     public String extractRole(String token) {

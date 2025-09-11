@@ -39,16 +39,8 @@ public abstract class AuditEntity {
     @Column(name = "is_deleted")
     Boolean isDeleted = false;
 
-    @Column(name = "deleted_by")
-    String deletedBy;
-
     @Column(name = "deleted_at")
     LocalDateTime deletedAt;
 
-    public void markDeleted(String username) {
-        this.isDeleted = true;
-        this.deletedBy = username;
-        this.deletedAt = LocalDateTime.now();
-    }
 
 }

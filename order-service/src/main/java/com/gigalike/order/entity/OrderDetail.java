@@ -6,20 +6,23 @@ import com.gigalike.shared.constant.Duration;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.UUID;
 
 
 @Entity
-@Table(name = "order_detail")
 @Setter
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "order_detail")
+@SQLDelete(sql = "UPDATE order_items SET is_delete = true WHERE id = ?")
+@SQLRestriction("is_deleted = false")
 public class OrderDetail extends BaseEntity {
-
     @Column(name = "mmo_resource_id")
     UUID mmoResourceId;
 

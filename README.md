@@ -74,7 +74,7 @@ A complete, production-ready microservices architecture for e-commerce platform 
 ### 1. Setup Environment
 ```bash
 # Copy environment template
-cp env.example .env
+cp .env.local.example .env
 
 # Edit configuration (REQUIRED)
 nano .env  # or your favorite editor

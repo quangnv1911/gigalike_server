@@ -1,13 +1,15 @@
 package com.gigalike.marketing.entity;
 
 import com.gigalike.marketing.base.BaseEntity;
-import com.gigalike.marketing.constant.CouponType;
+import com.gigalike.shared.constant.CouponType;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
@@ -15,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "tickets")
+@Table(name = "coupons")
 @Data
 @SQLDelete(sql = "UPDATE tickets SET is_delete = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")
@@ -32,14 +34,14 @@ public class Coupon extends BaseEntity {
     CouponType type =  CouponType.FIXED_AMOUNT;
 
     @Builder.Default
-    int value = 0;
+    BigDecimal value = BigDecimal.ZERO;
 
     @Builder.Default
     int totalUsed = 0;
 
-    @Builder.Default
-    int maxUsed = 0;
+    @Nullable
+    Integer maxUsed;
 
-    @Builder.Default
-    LocalDateTime expiredIn = LocalDateTime.now();
+    @Nullable
+    LocalDateTime expiredIn;
 }

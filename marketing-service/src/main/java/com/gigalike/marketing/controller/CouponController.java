@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/coupon")
+@RequestMapping("/api/coupons")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CouponController {
@@ -31,6 +31,12 @@ public class CouponController {
         return ResponseEntity.ok(ApiResponse.success("Get coupon detail successfully", response));
     }
 
+    @GetMapping("/code/{couponCode}")
+    public ResponseEntity<ApiResponse<?>> getCouponDetailByCouponCode(@PathVariable String couponCode) {
+        var response = couponService.getCouponDetailByCouponCode(couponCode);
+        return ResponseEntity.ok(ApiResponse.success("Get coupon detail successfully", response));
+    }
+
     @PostMapping("/")
     public ResponseEntity<ApiResponse<?>> createCoupon(@RequestBody CouponRequest coupon) {
         var response = couponService.createCoupon(coupon);
@@ -43,8 +49,8 @@ public class CouponController {
         return ResponseEntity.ok(ApiResponse.success("Update coupon successfully", response));
     }
 
-    @GetMapping("/{couponId}")
-    public ResponseEntity<ApiResponse<?>> getAllcoupons(@PathVariable UUID couponId) {
+    @DeleteMapping("/{couponId}")
+    public ResponseEntity<ApiResponse<?>> deleteCoupon(@PathVariable UUID couponId) {
         couponService.deleteCouponById(couponId);
         return ResponseEntity.ok(ApiResponse.success("Delete coupon successfully", couponId));
     }

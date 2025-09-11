@@ -2,22 +2,23 @@ package com.gigalike.platform.entity;
 
 import com.gigalike.platform.base.BaseEntity;
 import com.gigalike.shared.constant.ActionType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.userdetails.UserDetails;
 
-@Entity
+@EqualsAndHashCode(callSuper = true)
 @Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
+@Table(name = "activity")
+@Data
+@SQLDelete(sql = "UPDATE activity SET is_delete = true WHERE id = ?")
+@SQLRestriction("is_deleted = false")
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Activity extends BaseEntity {
     @Column(name = "meta_data")
     String metaData;

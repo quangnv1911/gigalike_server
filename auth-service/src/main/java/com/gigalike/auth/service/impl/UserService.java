@@ -1,10 +1,12 @@
 package com.gigalike.auth.service.impl;
 
 import com.gigalike.auth.dto.data.UserDto;
+import com.gigalike.auth.dto.request.UpdateUserAmount;
 import com.gigalike.auth.dto.request.UpdateUserRequest;
 import com.gigalike.auth.entity.User;
 import com.gigalike.auth.repository.UserRepository;
 import com.gigalike.auth.service.IUserService;
+import com.gigalike.shared.exception.BusinessException;
 import com.gigalike.shared.exception.NotFoundException;
 import com.gigalike.shared.exception.UserNotFoundException;
 import com.gigalike.shared.util.CommonUtil;
@@ -16,6 +18,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 @Slf4j
@@ -27,7 +30,7 @@ public class UserService implements IUserService {
 
     @Override
     public UserDto getCurrentUser() {
-        return findUserByUsername(SecurityUtil.getCurrentUsername());
+        return findUserDtoByUsername(SecurityUtil.getCurrentUsername());
     }
 
     @Override
@@ -51,6 +54,21 @@ public class UserService implements IUserService {
     }
 
     @Override
+    public void updateUserAmount(String userName, UpdateUserAmount updateUserAmount) {
+        var user = findUserByUsername(userName);
+        log.info("User id {}: balance before update = {}", userName, user.getBalance());
+
+        BigDecimal newBalance = user.getBalance().add(updateUserAmount.getAmount());
+        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("Insufficient balance");
+        }
+
+        user.setBalance(user.getBalance().add(updateUserAmount.getAmount()));
+        userRepository.save(user);
+        log.info("User id {}: balance after update = {}", userName, user.getBalance());
+    }
+
+    @Override
     public void updateUserIpValid(UUID userId, String ip) {
         var user = findUserById(userId);
         List<String> currentUserIp = CommonUtil.convertStringArrayToList(user.getIpValid());
@@ -69,7 +87,15 @@ public class UserService implements IUserService {
         return user.get();
     }
 
-    private UserDto findUserByUsername(String username) {
+    private User findUserByUsername(String username) {
+        var user = userRepository.findByUsername(username);
+        if (user.isEmpty()) {
+            throw new UserNotFoundException(String.format("User %s not found", username));
+        }
+        return user.get();
+    }
+
+    private UserDto findUserDtoByUsername(String username) {
         var user = userRepository.findByUsername(username);
         if (user.isEmpty()) {
             throw new UserNotFoundException(String.format("User %s not found", username));

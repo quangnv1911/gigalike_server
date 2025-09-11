@@ -6,17 +6,21 @@ import com.gigalike.product.constant.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.UUID;
 
 @Entity
-@Table(name = "product_detail")
 @Setter
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "product_detail")
+@SQLDelete(sql = "UPDATE product_detail SET is_delete = true WHERE id = ?")
+@SQLRestriction("is_deleted = false")
 public class ProductDetail extends BaseEntity {
     String data;
 

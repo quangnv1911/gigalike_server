@@ -1,5 +1,6 @@
 package com.gigalike.shared.util;
 
+import com.gigalike.shared.dto.ParsedPaymentDescription;
 import com.gigalike.shared.dto.VietQrConfigDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,22 +14,30 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
 public class PaymentUtil {
     private static final String vietQrTemplate = "https://img.vietqr.io/image/<BANK_ID>-<ACCOUNT_NO>-<TEMPLATE>.png?amount=<AMOUNT>&addInfo=<DESCRIPTION>&accountName=<ACCOUNT_NAME>";
-    private static final String randomChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     public static final String urlGetBankInfo = "https://api.vietqr.io/v2/banks";
-    public static String generatePaymentString(String userName) {
-        SecureRandom random = new SecureRandom();
-        StringBuilder sb = new StringBuilder(userName);
+    private static final Pattern DESCRIPTION_PATTERN =
+            Pattern.compile("(.+)_([A-Z0-9]{6})");
 
-        // Thêm 6 ký tự ngẫu nhiên
-        for (int i = 0; i < 6; i++) {
-            int index = random.nextInt(randomChars.length());
-            sb.append(randomChars.charAt(index));
+    private static final String RANDOM_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int RANDOM_LENGTH = 6;
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    public static String generatePaymentString(String userName) {
+        StringBuilder sb = new StringBuilder(userName.length() + 1 + RANDOM_LENGTH);
+        sb.append(userName).append("_");
+
+        for (int i = 0; i < RANDOM_LENGTH; i++) {
+            int index = RANDOM.nextInt(RANDOM_CHARS.length());
+            sb.append(RANDOM_CHARS.charAt(index));
         }
+
         return sb.toString();
     }
 
@@ -56,6 +65,17 @@ public class PaymentUtil {
             return URLEncoder.encode(value, StandardCharsets.UTF_8);
         } catch (Exception e) {
             return value;
+        }
+    }
+
+    public static ParsedPaymentDescription parseDescription(String description) {
+        Matcher matcher = DESCRIPTION_PATTERN.matcher(description);
+        if (matcher.matches()) {
+            String userName = matcher.group(1);
+            String code = matcher.group(2);
+            return new ParsedPaymentDescription(userName, code);
+        } else {
+            throw new IllegalArgumentException("Invalid description format: " + description);
         }
     }
 

@@ -1,7 +1,11 @@
 package com.gigalike.shared.constant;
 
+import lombok.Getter;
+
+@Getter
 public enum Duration {
     ONE_MONTH(1),
+    THREE_MONTHs(3),
     SIX_MONTHS(6),
     ONE_YEAR(12);
 
@@ -11,7 +15,4 @@ public enum Duration {
         this.months = months;
     }
 
-    public int getMonths() {
-        return months;
-    }
 }

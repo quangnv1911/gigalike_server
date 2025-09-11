@@ -21,5 +21,7 @@ feign:
     url: ${AUTH_SERVICE_URL}
   product-service:
     url: ${PRODUCT_SERVICE_URL}
+  marketing-service:
+    url: ${MARKETING_SERVICE_URL}
   payment-service:
     url: ${PAYMENT_SERVICE_URL}

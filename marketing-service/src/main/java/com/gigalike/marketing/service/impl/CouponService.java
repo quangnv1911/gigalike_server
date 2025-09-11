@@ -54,6 +54,11 @@ public class CouponService implements ICouponService {
     }
 
     @Override
+    public CouponResponse getCouponDetailByCouponCode(String couponCode) {
+        return CouponResponse.fromCoupon(findByCouponCode(couponCode));
+    }
+
+    @Override
     public CouponResponse createCoupon(CouponRequest newCoupon) {
         var coupon = CouponRequest.convertToCoupon(newCoupon);
         var couponResponse = CouponResponse.fromCoupon(couponRepository.save(coupon));
@@ -79,8 +84,19 @@ public class CouponService implements ICouponService {
         log.info("Coupon with id {} has been deleted", couponId);
     }
 
+    @Override
+    public void addNewCouponUsed(String couponCode) {
+        var coupon = findByCouponCode(couponCode);
+        coupon.setTotalUsed(coupon.getTotalUsed() + 1);
+        couponRepository.save(coupon);
+    }
+
     private Coupon findCouponById(UUID couponId) {
         return couponRepository.findById(couponId).orElseThrow(() -> new NotFoundException("Coupon not found"));
+    }
+
+    private Coupon findByCouponCode(String couponCode) {
+        return couponRepository.findByCode(couponCode).orElseThrow(() -> new NotFoundException("Coupon not found"));
     }
 
 }

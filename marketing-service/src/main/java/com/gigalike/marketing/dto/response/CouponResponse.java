@@ -1,14 +1,13 @@
 package com.gigalike.marketing.dto.response;
 
-import com.gigalike.marketing.constant.CouponType;
+import com.gigalike.shared.constant.CouponType;
 import com.gigalike.marketing.entity.Coupon;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -25,14 +24,15 @@ public class CouponResponse {
     CouponType type = CouponType.FIXED_AMOUNT;
 
     @Builder.Default
-    int value = 0;
+    BigDecimal value = BigDecimal.ZERO;
 
     @Builder.Default
     int totalUsed = 0;
-    @Builder.Default
-    int maxUsed = 0;
+
+    Integer maxUsed;
 
     LocalDateTime updatedAt;
+    LocalDateTime expiredIn;
 
     public static CouponResponse fromCoupon(Coupon coupon) {
         return CouponResponse.builder()
@@ -44,6 +44,7 @@ public class CouponResponse {
                 .updatedAt(coupon.getUpdatedAt())
                 .code(coupon.getCode())
                 .maxUsed(coupon.getMaxUsed())
+                .expiredIn(coupon.getExpiredIn())
                 .build();
     }
 }

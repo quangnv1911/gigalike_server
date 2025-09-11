@@ -2,7 +2,6 @@ package com.gigalike.payment.entity;
 
 import com.gigalike.payment.base.BaseEntity;
 import com.gigalike.payment.constant.PaymentType;
-import com.gigalike.payment.dto.data.CassoConfigDto;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -14,9 +13,9 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
+@Table(name = "payment_configs")
 @Data
-@SQLDelete(sql = "UPDATE users SET is_delete = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE payment_configs SET is_delete = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PaymentConfig extends BaseEntity {

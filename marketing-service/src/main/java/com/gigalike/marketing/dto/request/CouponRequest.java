@@ -1,11 +1,14 @@
 package com.gigalike.marketing.dto.request;
 
-import com.gigalike.marketing.constant.CouponType;
+import com.gigalike.shared.constant.CouponType;
 import com.gigalike.marketing.entity.Coupon;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -17,12 +20,13 @@ public class CouponRequest {
     CouponType type =  CouponType.FIXED_AMOUNT;
 
     @Builder.Default
-    int value = 0;
+    BigDecimal value = BigDecimal.ZERO;
 
     @Builder.Default
     int totalUsed = 0;
-@Builder.Default
-    int maxUsed = 0;
+    Integer maxUsed;
+
+    LocalDateTime expiredIn;
 
     public static Coupon convertToCoupon(CouponRequest couponRequest) {
         return Coupon.builder()
@@ -31,6 +35,7 @@ public class CouponRequest {
                 .value(couponRequest.getValue())
                 .maxUsed(couponRequest.getMaxUsed())
                 .totalUsed(couponRequest.getTotalUsed())
+                .expiredIn(couponRequest.getExpiredIn())
                 .build();
     }
 }

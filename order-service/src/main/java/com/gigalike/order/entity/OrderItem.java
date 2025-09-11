@@ -1,54 +1,40 @@
 package com.gigalike.order.entity;
 
+import com.gigalike.order.base.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Data
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "order_items")
-public class OrderItem {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+@SQLDelete(sql = "UPDATE order_items SET is_delete = true WHERE id = ?")
+@SQLRestriction("is_deleted = false")
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class OrderItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    Order order;
 
     @Column(name = "product_id", nullable = false)
-    private Long productId;
+    UUID productId;
 
-    @Column(name = "product_name", nullable = false)
-    private String productName;
-
-    @Column(name = "product_price", precision = 10, scale = 2, nullable = false)
-    private BigDecimal productPrice;
+    @Column(name = "product_duration_id", nullable = false)
+    UUID productDuration;
 
     @Column(nullable = false)
-    private Integer quantity;
+    Integer quantity = 0;
 
-    @Column(precision = 10, scale = 2, nullable = false)
-    private BigDecimal subtotal;
+    @Column(name = "order_info")
+    String orderInfo;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        calculateSubtotal();
-    }
-
-    public void calculateSubtotal() {
-        this.subtotal = productPrice.multiply(BigDecimal.valueOf(quantity));
-    }
 }

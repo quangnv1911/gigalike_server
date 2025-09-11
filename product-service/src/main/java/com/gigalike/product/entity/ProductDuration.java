@@ -5,6 +5,8 @@ import com.gigalike.shared.constant.Duration;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 
@@ -16,6 +18,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@SQLDelete(sql = "UPDATE product_duration SET is_delete = true WHERE id = ?")
+@SQLRestriction("is_deleted = false")
 public class ProductDuration extends BaseEntity {
     @Column(name = "duration", nullable = false)
     @Enumerated(EnumType.STRING)

@@ -20,13 +20,18 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
+@Table(name = "payments")
 @Data
-@SQLDelete(sql = "UPDATE users SET is_delete = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE payments SET is_delete = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Payment extends BaseEntity {
     BigDecimal amount;
+
+    String description;
+
+    // Mã giao dịch từ phía ngân hàng
+    String reference;
 
     @Enumerated(EnumType.STRING)
     PaymentType paymentType;

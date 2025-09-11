@@ -1,4 +1,4 @@
-package com.gigalike.product.dto;
+package com.gigalike.product.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;

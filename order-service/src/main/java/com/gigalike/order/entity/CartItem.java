@@ -1,64 +1,34 @@
 package com.gigalike.order.entity;
 
+import com.gigalike.order.base.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "cart_items")
-public class CartItem {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class CartItem extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", nullable = false)
-    private Cart cart;
+    Cart cart;
 
     @Column(name = "product_id", nullable = false)
-    private Long productId;
+    UUID productId;
 
-    @Column(name = "product_name", nullable = false)
-    private String productName;
-
-    @Column(name = "product_price", precision = 10, scale = 2, nullable = false)
-    private BigDecimal productPrice;
+    @Column(name = "product_duration_id")
+    UUID productDurationId;
 
     @Column(nullable = false)
-    private Integer quantity;
-
-    @Column(precision = 10, scale = 2, nullable = false)
-    private BigDecimal subtotal;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        calculateSubtotal();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-        calculateSubtotal();
-    }
-
-    public void calculateSubtotal() {
-        this.subtotal = productPrice.multiply(BigDecimal.valueOf(quantity));
-    }
+    Integer quantity = 1;
 }

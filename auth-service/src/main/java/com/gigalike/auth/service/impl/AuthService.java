@@ -105,7 +105,7 @@ public class AuthService implements IAuthService {
     }
 
     @Override
-    public AuthResponse login(HttpServletRequest httpRequest,LoginRequest request) {
+    public AuthResponse login(HttpServletRequest httpRequest, LoginRequest request) {
         log.info("Attempting to login user: {}", request.getUsername());
 
         Authentication authentication = authenticationManager.authenticate(
@@ -115,7 +115,12 @@ public class AuthService implements IAuthService {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         User user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        if(!isIpValid(httpRequest,user)){
+
+        if (user.getRole() == RoleValue.ADMIN) {
+            throw new BadCredentialsException("Admin must login using Google account");
+        }
+
+        if (!isIpValid(httpRequest, user)) {
             throw new BusinessException("Invalid IP address");
         }
         log.info("User {} logged in successfully", user.getId());
@@ -124,7 +129,7 @@ public class AuthService implements IAuthService {
     }
 
     @Override
-    public AuthResponse loginGoogle(HttpServletRequest httpRequest,LoginGoogleRequest request) {
+    public AuthResponse loginGoogle(HttpServletRequest httpRequest, LoginGoogleRequest request) {
 
         NetHttpTransport httpTransport = new NetHttpTransport();
         JsonFactory jsonFactory = new GsonFactory();
@@ -160,10 +165,10 @@ public class AuthService implements IAuthService {
                                 .build();
                         return userRepository.save(newUser);
                     });
-            if(!isIpValid(httpRequest,user)){
+            if (!isIpValid(httpRequest, user)) {
                 throw new BusinessException("Invalid IP address");
             }
-            if(!user.isEnabled()) {
+            if (!user.isEnabled()) {
                 throw new BadCredentialsException("User is disabled");
             }
             // Generate JWT token
@@ -214,7 +219,7 @@ public class AuthService implements IAuthService {
     }
 
     private AuthResponse generateAuthResponse(User user) {
-        String accessToken = jwtUtil.generateAccessToken(user);
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole().toString(), user.getUsername());
         String refreshTokenValue = jwtUtil.generateRefreshToken(user);
 
         // Save refresh token to database

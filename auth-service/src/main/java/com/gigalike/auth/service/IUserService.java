@@ -1,6 +1,7 @@
 package com.gigalike.auth.service;
 
 import com.gigalike.auth.dto.data.UserDto;
+import com.gigalike.auth.dto.request.UpdateUserAmount;
 import com.gigalike.auth.dto.request.UpdateUserRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -10,6 +11,6 @@ public interface IUserService {
     UserDto getCurrentUser();
     UserDto getUserById(UUID userId);
     void updateUserInfo(UUID userId, UpdateUserRequest updateUserRequest);
-
+    void updateUserAmount(String userName, UpdateUserAmount updateUserAmount);
     void updateUserIpValid(UUID userId, String ip);
 }
