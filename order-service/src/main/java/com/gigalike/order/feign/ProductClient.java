@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.UUID;
 
-@FeignClient(name = "product-service", url = "${feign.product-service.url}")
+@FeignClient(name = "product-service")
 public interface ProductClient {
     @GetMapping("/products/{productId}")
     ApiResponse<ProductDto> getProductDetail(@PathVariable UUID productId);

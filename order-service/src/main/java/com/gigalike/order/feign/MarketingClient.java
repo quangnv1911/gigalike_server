@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.UUID;
 
-@FeignClient(name = "marketing-service", url = "${feign.marketing-service.url}")
+@FeignClient(name = "marketing-service")
 public interface MarketingClient {
     @GetMapping("/coupons/code/{couponCode}")
     ApiResponse<CouponResponse> getCouponDetailByCouponCode(@PathVariable String couponCode);

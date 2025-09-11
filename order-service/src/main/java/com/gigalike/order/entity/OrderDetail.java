@@ -3,6 +3,7 @@ package com.gigalike.order.entity;
 import com.gigalike.order.base.BaseEntity;
 import com.gigalike.shared.constant.BigCategory;
 import com.gigalike.shared.constant.Duration;
+import com.gigalike.shared.constant.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -31,7 +32,7 @@ public class OrderDetail extends BaseEntity {
 
     @Column(name= "status")
     @Enumerated(EnumType.STRING)
-    Order.OrderStatus status;
+    OrderStatus status;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false)

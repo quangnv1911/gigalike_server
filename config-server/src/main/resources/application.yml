@@ -2,6 +2,11 @@ server:
   port: ${CONFIG_SERVER_PORT}
 
 spring:
+  cloud:
+    config:
+      server:
+        native:
+          searchLocations: classpath:/config-repo/
   application:
     name: config-server
   profiles:
