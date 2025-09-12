@@ -45,4 +45,10 @@ public class UserController {
         userService.updateUserAmount(userName, updateUserAmount);
         return ResponseEntity.ok(ApiResponse.success("User account has been updated successfully", updateUserAmount));
     }
+
+    @PutMapping("/{userId}")
+    public ResponseEntity<ApiResponse<?>> registerCollaborator(@PathVariable UUID userId, @RequestBody UpdateUserRequest updateUserRequest) {
+        userService.updateUserInfo(userId, updateUserRequest);
+        return ResponseEntity.ok(ApiResponse.success("User account has been updated successfully", updateUserRequest));
+    }
 }

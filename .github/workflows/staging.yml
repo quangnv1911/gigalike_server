@@ -105,6 +105,17 @@ jobs:
             
             echo "✅ Environment file created successfully!"
 
+      - name: Install WireGuard
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wireguard
+
+      - name: Start WireGuard client
+        run: |
+          sudo apt update && sudo apt install -y wireguard-tools
+          echo "${{ secrets.WG_CONF }}" > wg0.conf
+          sudo wg-quick up wg0.conf
+
       - name: 🚀 Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:

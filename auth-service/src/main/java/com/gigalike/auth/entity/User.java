@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Builder
@@ -67,6 +68,12 @@ public class User extends BaseEntity implements UserDetails {
 
     @Column(name = "balance")
     BigDecimal balance = BigDecimal.ZERO;
+
+    @Column(name = "parent_id")
+    UUID parrentId;
+
+    @Column(name = "domain")
+    String domain;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

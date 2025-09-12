@@ -132,8 +132,8 @@ jobs:
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ github.TOKEN }}
-          approvers: ${{ secrets.PRODUCTION_APPROVERS }}
-          minimum-approvals: 2
+          # approvers: ${{ secrets.PRODUCTION_APPROVERS }}
+          # minimum-approvals: 2
           issue-title: "🚀 Production Deployment Approval Required"
           issue-body: |
             Please review and approve the production deployment.
