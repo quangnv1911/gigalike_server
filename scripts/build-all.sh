@@ -55,42 +55,66 @@ build_service() {
 
 # Main execution
 main() {
-    echo "================================"
-    echo "Starting Gigalike Microservices Build Process"
-    echo "================================"
+    print_header "Starting Gigalike Microservices Build Process"
 
-    # Lấy thư mục gốc của project
+    # Get project root directory
     PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+    
+    print_status "Project root: $PROJECT_ROOT"
+    print_status "Maven version: $(mvn -v | head -n 1)"
+    print_status "Java version: $(java -version 2>&1 | head -n 1)"
 
-    # Danh sách services
+    cd "$PROJECT_ROOT" || exit 1
+
+    # Option 1: Build entire project from root (RECOMMENDED)
+    print_status "Building entire project from root (includes parent POM)..."
+    mvn clean install -DskipTests
+
+    if [ $? -eq 0 ]; then
+        print_status "✅ Build completed successfully using root POM approach"
+        return 0
+    else
+        print_warning "Root build failed, falling back to individual module builds..."
+    fi
+
+    # Option 2: Fallback - Manual dependency order (if root build fails)
+    print_status "Building modules in dependency order..."
+    
+    # Step 1: Install parent POM first
+    print_status "Installing parent POM..."
+    mvn clean install -N -DskipTests
+    
+    # Step 2: Build utility-shared (dependency for other services)
+    print_status "Building utility-shared (required dependency)..."
+    build_service "utility-shared"
+
+    # Step 3: Build services in parallel (now that dependencies are ready)
     SERVICES=("api-gateway" "auth-service" "config-server" "eureka-server" \
               "marketing-service" "order-service" "payment-service" \
               "platform-service" "product-service")
 
-    echo "[INFO] Maven version: $(mvn -v | head -n 1)"
-    echo "[INFO] Java version: $(java -version 2>&1 | head -n 1)"
-
-    # Build utility-shared trước
-    build_service "utility-shared"
-
-    # Build các service còn lại song song
+    print_status "Building remaining services in parallel..."
     pids=()
     for service in "${SERVICES[@]}"; do
         ( build_service "$service" ) &
         pids+=($!)
     done
 
-    # Chờ tất cả job hoàn thành
+    # Wait for all parallel jobs to complete
+    failed=0
     for pid in "${pids[@]}"; do
         wait $pid || {
-            echo "[ERROR] One of the builds failed"
-            exit 1
+            print_error "One of the service builds failed (PID: $pid)"
+            failed=1
         }
     done
 
-    echo "================================"
-    echo "Build Process Completed Successfully"
-    echo "================================"
+    if [ $failed -eq 1 ]; then
+        print_error "Build process failed!"
+        exit 1
+    fi
+
+    print_header "✅ Build Process Completed Successfully"
 }
 
 main "$@"
