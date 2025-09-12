@@ -14,16 +14,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(
-        getterVisibility = JsonAutoDetect.Visibility.NONE
-)
 public class ApiResponse<T> {
-    private boolean success;
-    private String message;
-    private T data;
-    private String error;
-    private int statusCode;
-    
+    boolean success;
+    String message;
+    T data;
+    String error;
+    int statusCode;
+
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
 
@@ -47,6 +44,7 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> error(String error, int statusCode) {
         return ApiResponse.<T>builder()
                 .success(false)
+                .message(error)
                 .error(error)
                 .statusCode(statusCode)
                 .build();

@@ -11,6 +11,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -20,7 +21,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "payments")
+@Document(value = "payments")
 @Data
 @SQLDelete(sql = "UPDATE payments SET is_delete = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")

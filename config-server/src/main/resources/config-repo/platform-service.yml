@@ -4,8 +4,12 @@ server:
 spring:
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI_PLATFORM}
-      auto-index-creation: true
+      authentication-database: ${MONGO_DB_AUTHEN}
+      database: ${MONGO_DB_PLATFORM}
+      host: ${MONGO_HOST}
+      port: ${MONGO_PORT}
+      username: ${MONGO_USERNAME}
+      password: ${MONGO_PASSWORD}
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -47,4 +51,4 @@ notification:
     from: ${NOTIFICATION_EMAIL_FROM}
   telegram:
     token: ${TELEGRAM_BOT_TOKEN}
-    restaurant-group: ${TELEGRAM_GROUP_ID}
+    group-id: ${TELEGRAM_GROUP_ID}

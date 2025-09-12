@@ -4,8 +4,12 @@ server:
 spring:
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI_MARKETING}}
-      auto-index-creation: true
+      authentication-database: ${MONGO_DB_AUTHEN}
+      database: ${MONGO_DB_MARKETING}
+      host: ${MONGO_HOST}
+      port: ${MONGO_PORT}
+      username: ${MONGO_USERNAME}
+      password: ${MONGO_PASSWORD}
 
 feign:
   auth-service:

@@ -31,7 +31,7 @@ public class CartController {
         return ResponseEntity.ok(ApiResponse.success("Add to product successfully", response));
     }
 
-    @PostMapping("/")
+    @PutMapping("/")
     public ResponseEntity<ApiResponse<?>> updateCartItemQuantity(@RequestBody UpdateCartItemQuantity updateCartItemQuantity) {
         var response = cartService.updateCartItemQuantity(updateCartItemQuantity);
         return ResponseEntity.ok(ApiResponse.success("Add to product successfully", response));

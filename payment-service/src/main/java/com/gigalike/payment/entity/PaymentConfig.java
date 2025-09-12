@@ -7,13 +7,14 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "payment_configs")
+@Document(value = "payment_configs")
 @Data
 @SQLDelete(sql = "UPDATE payment_configs SET is_delete = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")

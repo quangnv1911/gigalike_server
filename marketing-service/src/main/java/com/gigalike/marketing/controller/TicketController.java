@@ -4,7 +4,6 @@ import com.gigalike.marketing.dto.request.TicketRequest;
 import com.gigalike.marketing.dto.request.TicketSearchRequest;
 import com.gigalike.marketing.service.ITicketService;
 import com.gigalike.shared.dto.ApiResponse;
-import jakarta.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -44,8 +43,8 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success("Update ticket successfully", response));
     }
 
-    @GetMapping("/{ticketId}")
-    public ResponseEntity<ApiResponse<?>> getAllTickets(@PathVariable UUID ticketId) {
+    @DeleteMapping("/{ticketId}")
+    public ResponseEntity<ApiResponse<?>> deleteTicketId(@PathVariable UUID ticketId) {
         ticketService.deleteTicketById(ticketId);
         return ResponseEntity.ok(ApiResponse.success("Delete ticket successfully", ticketId));
     }

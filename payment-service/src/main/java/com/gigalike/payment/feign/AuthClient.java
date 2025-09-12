@@ -10,6 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(name = "auth-service")
 public interface AuthClient {
     @PutMapping("/users/amount/{userName}")
-    ApiResponse<?> updateUserAmount(@PathVariable String userName, @RequestBody UpdateUserAmount body);
+    ApiResponse<?> updateUserAmount(@PathVariable("userName") String userName, @RequestBody UpdateUserAmount body);
 }
 

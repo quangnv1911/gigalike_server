@@ -14,5 +14,5 @@ import java.util.UUID;
 @FeignClient(name = "marketing-service")
 public interface MarketingClient {
     @GetMapping("/coupons/code/{couponCode}")
-    ApiResponse<CouponResponse> getCouponDetailByCouponCode(@PathVariable String couponCode);
+    ApiResponse<CouponResponse> getCouponDetailByCouponCode(@PathVariable("couponCode") String couponCode);
 }

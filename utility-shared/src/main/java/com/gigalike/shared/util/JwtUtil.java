@@ -25,7 +25,8 @@ import java.util.function.Function;
 
 @Slf4j
 @Component
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class JwtUtil {
     JwtProperties properties;
 

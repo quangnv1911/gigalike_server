@@ -1,6 +1,6 @@
 spring:
   application:
-    name: notification-service
+    name: platform-service
   profiles:
     active: ${SPRING_PROFILES_ACTIVE}
   cloud:

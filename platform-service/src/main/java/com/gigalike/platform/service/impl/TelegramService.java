@@ -15,11 +15,11 @@ import org.springframework.stereotype.Service;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class TelegramService implements ITelegramService {
     @NonFinal
-    @Value("${telegram.token}")
+    @Value("${notification.telegram.token}")
     String teleToken;
 
     @NonFinal
-    @Value("${telegram.token}")
+    @Value("${notification.telegram.group-id}")
     String chatId;
 
 

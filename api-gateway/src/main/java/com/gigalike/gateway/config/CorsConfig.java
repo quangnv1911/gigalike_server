@@ -10,8 +10,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-
 @Configuration
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -21,8 +19,20 @@ public class CorsConfig {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(corsProperties.isAllowCredentials());
-        config.addAllowedOriginPattern("*"); // hoặc map từ corsProperties.getAllowedOrigins()
+
+        // Cấu hình CORS an toàn để tránh CSRF
+        if (corsProperties.isAllowCredentials() &&
+                corsProperties.getAllowedOrigins() != null &&
+                !corsProperties.getAllowedOrigins().isEmpty()) {
+            // Nếu cho phép credentials, phải chỉ định origins cụ thể
+            config.setAllowedOrigins(corsProperties.getAllowedOrigins());
+            config.setAllowCredentials(true);
+        } else {
+            // Nếu không cần credentials, có thể dùng wildcard
+            config.addAllowedOriginPattern("*");
+            config.setAllowCredentials(false);
+        }
+
         config.setAllowedMethods(corsProperties.getAllowedMethods());
         config.setAllowedHeaders(corsProperties.getAllowedHeaders());
         config.setExposedHeaders(corsProperties.getExposedHeaders());
