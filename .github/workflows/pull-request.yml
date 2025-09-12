@@ -79,13 +79,10 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: 🏗️ Build Parent Project
-        run: mvn clean install -DskipTests
-
-      - name: 🏗️ Build Service
+      - name: 🏗️ Build All Services (utility-shared + services)
         run: |
-          chmod +x ./scripts/build.sh
-          ./scripts/build.sh
+          chmod +x ./scripts/build-all.sh
+          ./scripts/build-all.sh
 
       - name: 🐳 Build Docker Image
         working-directory: ./${{ matrix.service }}
