@@ -18,7 +18,6 @@ on:
         type: choice
         options:
         - deploy
-        - rollback
 
 env:
   DOCKER_REGISTRY: docker.io
@@ -214,42 +213,4 @@ jobs:
             
             echo "🎉 Health check completed!"
 
-  rollback:
-    name: 🔄 Rollback ${{ github.event.inputs.environment }}
-    runs-on: ubuntu-latest  
-    needs: validate-inputs
-    if: github.event.inputs.action == 'rollback'
-    environment: ${{ github.event.inputs.environment }}
-    
-    steps:
-      - name: 🔄 Execute Rollback
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_HOST || secrets.PROD_HOST }}
-          username: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_USERNAME || secrets.PROD_USERNAME }}
-          key: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_SSH_KEY || secrets.PROD_SSH_KEY }}
-          port: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_PORT || secrets.PROD_PORT }}
-          script: |
-            echo "🔄 Starting rollback for ${{ github.event.inputs.environment }} environment..."
-            
-            # Navigate to application directory
-            cd /opt/gigalike || (echo "❌ Directory /opt/gigalike not found" && exit 1)
-            
-            # Check if deploy script exists
-            if [ ! -f scripts/deploy.sh ]; then
-              echo "❌ scripts/deploy.sh not found"
-              exit 1
-            fi
-            
-            # Make script executable
-            chmod +x scripts/deploy.sh
-            
-            # Stop current services
-            echo "🛑 Stopping current services..."
-            ./scripts/deploy.sh stop
-            
-            # Start services (rollback to previous state)
-            echo "🔄 Starting services with previous configuration..."
-            ./scripts/deploy.sh core
-            
-            echo "✅ Rollback completed!"
+  

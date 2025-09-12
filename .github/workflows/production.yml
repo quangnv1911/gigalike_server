@@ -45,6 +45,7 @@ jobs:
           path: reports/
 
   build-and-push-prod:
+    permissions: write-all
     name: 🏗️ Build & Push Production Images
     runs-on: ubuntu-latest
     needs: [security-and-quality]
@@ -285,22 +286,4 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-  rollback:
-    name: 🔄 Rollback (Manual Trigger)
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    environment: production
-    
-    steps:
-      - name: 🔄 Rollback Production
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USERNAME }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          script: |
-            echo "🔄 Starting production rollback..."
-            # Implement rollback logic
-            cd /opt/gigalike-rollback
-            docker-compose up -d
-            echo "✅ Rollback completed"
+  
