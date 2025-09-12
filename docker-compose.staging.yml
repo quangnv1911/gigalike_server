@@ -1,0 +1,250 @@
+version: '3.8'
+
+services:
+  # Databases
+  mysql:
+    image: mysql:8.0
+    container_name: gigalike-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      MYSQL_DATABASE: gigalike_auth
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+
+  mongodb:
+    image: mongo:7.0
+    container_name: gigalike-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    ports:
+      - "${MONGO_PORT}:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: gigalike-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: gigalike-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+    command: redis-server --appendonly yes
+
+  minio:
+    image: minio/minio:latest
+    container_name: gigalike-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:${MINIO_CONSOLE_PORT}
+    ports:
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - gigalike-network
+    command: server /data --console-address ":9001"
+    env_file:
+      - .env.production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Infrastructure Services
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: gigalike-eureka
+    ports:
+      - "${EUREKA_SERVER_PORT}:8761"
+    networks:
+      - gigalike-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    env_file:
+      - .env.production
+
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: gigalike-config-server
+    ports:
+      - "${CONFIG_SERVER_PORT}:8888"
+    networks:
+      - gigalike-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    env_file:
+      - .env.production
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: gigalike-api-gateway
+    ports:
+      - "${API_GATEWAY_PORT}:8080"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+
+#  # Business Services
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: gigalike-auth-service
+    ports:
+      - "${AUTH_SERVICE_PORT}:8081"
+    depends_on:
+      - mysql
+      - config-server
+      - eureka-server
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: gigalike-product-service
+    ports:
+      - "${PRODUCT_SERVICE_PORT}:8082"
+    depends_on:
+      - mysql
+      - config-server
+      - eureka-server
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: gigalike-order-service
+    ports:
+      - "${ORDER_SERVICE_PORT}:8083"
+    depends_on:
+      - mysql
+      - config-server
+      - eureka-server
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: gigalike-payment-service
+    ports:
+      - "${PAYMENT_SERVICE_PORT}:8084"
+    depends_on:
+      - mongodb
+      - config-server
+      - eureka-server
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+
+  platform-service:
+    build:
+      context: ./platform-service
+      dockerfile: Dockerfile
+    container_name: gigalike-platform-service
+    ports:
+      - "${PLATFORM_SERVICE_PORT}:8086"
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - redis
+      - config-server
+      - eureka-server
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+
+  marketing-service:
+    build:
+      context: ./marketing-service
+      dockerfile: Dockerfile
+    container_name: gigalike-marketing-service
+    ports:
+      - "${MARKETING_SERVER_PORT}:8085"
+    depends_on:
+      - config-server
+      - eureka-server
+    networks:
+      - gigalike-network
+    env_file:
+      - .env.production
+
+volumes:
+  mysql_data:
+  mongodb_data:
+  rabbitmq_data:
+  redis_data:
+  minio_data:
+
+networks:
+  gigalike-network:
+    driver: bridge

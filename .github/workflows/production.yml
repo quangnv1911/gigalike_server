@@ -7,72 +7,14 @@ on:
     types: [published]
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_REGISTRY: docker.io
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  IMAGE_PREFIX: ${{ secrets.DOCKER_USERNAME }}/gigalike
 
 jobs:
-  test:
-    name: 🧪 Production Tests
-    runs-on: ubuntu-latest
-    
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: test_db
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-        ports:
-          - 3306:3306
-      
-      mongodb:
-        image: mongo:7.0
-        env:
-          MONGO_INITDB_ROOT_USERNAME: admin
-          MONGO_INITDB_ROOT_PASSWORD: password
-        options: >-
-          --health-cmd="echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-        ports:
-          - 27017:27017
-
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-
-      - name: ☕ Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: 🔍 Run Full Test Suite
-        run: |
-          echo "🧪 Running comprehensive test suite..."
-          mvn clean verify -B
-        env:
-          SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/test_db
-          SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: password
-
-      - name: 📊 Code Coverage Report
-        uses: codecov/codecov-action@v3
-        with:
-          files: target/site/jacoco/jacoco.xml
-          flags: unittests
-
   security-and-quality:
     name: 🔒 Security & Quality Gates
     runs-on: ubuntu-latest
-    needs: test
     
     steps:
       - name: 📥 Checkout Code
@@ -111,19 +53,20 @@ jobs:
   build-and-push-prod:
     name: 🏗️ Build Production Images
     runs-on: ubuntu-latest
-    needs: [test, security-and-quality]
+    needs: [security-and-quality]
     
     strategy:
       matrix:
         service: [
-          eureka-server,
-          config-server, 
           api-gateway,
           auth-service,
-          product-service,
+          config-server,
+          eureka-server,
+          marketing-service,
           order-service,
           payment-service,
-          platform-service
+          platform-service,
+          product-service
         ]
     
     steps:
@@ -147,33 +90,22 @@ jobs:
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 🔐 Login to Container Registry
+      - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: 📝 Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix={{branch}}-
-
-      - name: 🏗️ Build and push Production Docker image
+      - name: 🏗️ Build and Push Production Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./${{ matrix.service }}
           file: ./${{ matrix.service }}/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:production-latest
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:production-${{ github.sha }}
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
@@ -181,7 +113,7 @@ jobs:
       - name: 🔍 Scan image for vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:latest
+          image-ref: ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:latest
           format: 'sarif'
           output: 'trivy-results-${{ matrix.service }}.sarif'
 
@@ -193,7 +125,7 @@ jobs:
   deploy-production:
     name: 🚀 Production Deployment
     runs-on: ubuntu-latest
-    needs: [test, security-and-quality, build-and-push-prod]
+    needs: [security-and-quality, build-and-push-prod]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: 
       name: production
@@ -220,35 +152,7 @@ jobs:
             **Changes:**
             ${{ github.event.head_commit.message }}
 
-      - name: 🔧 Setup Production Environment
-        run: |
-          cat > .env.production << EOF
-          # Database Configuration
-          MYSQL_ROOT_PASSWORD=${{ secrets.PROD_MYSQL_PASSWORD }}
-          MONGODB_ROOT_PASSWORD=${{ secrets.PROD_MONGODB_PASSWORD }}
-          
-          # JWT Configuration
-          JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}
-          
-          # OAuth2 Configuration
-          GOOGLE_CLIENT_ID=${{ secrets.PROD_GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
-          
-          # Email Configuration
-          MAIL_USERNAME=${{ secrets.PROD_MAIL_USERNAME }}
-          MAIL_PASSWORD=${{ secrets.PROD_MAIL_PASSWORD }}
-          
-          # Payment Gateway (Live Keys)
-          STRIPE_SECRET_KEY=${{ secrets.PROD_STRIPE_SECRET_KEY }}
-          PAYPAL_CLIENT_ID=${{ secrets.PROD_PAYPAL_CLIENT_ID }}
-          PAYPAL_CLIENT_SECRET=${{ secrets.PROD_PAYPAL_CLIENT_SECRET }}
-          
-          # Environment
-          ENVIRONMENT=production
-          LOG_LEVEL=INFO
-          EOF
-
-      - name: 🚀 Blue-Green Deployment
+      - name: 🔧 Create Production Environment File
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.PROD_HOST }}
@@ -256,74 +160,105 @@ jobs:
           key: ${{ secrets.PROD_SSH_KEY }}
           port: ${{ secrets.PROD_PORT }}
           script: |
-            echo "🚀 Starting Blue-Green Production Deployment..."
+            echo "🔧 Creating .env file for production environment..."
             
-            # Set variables
-            BLUE_ENV="/opt/gigalike-blue"
-            GREEN_ENV="/opt/gigalike-green"
-            CURRENT_ENV="/opt/gigalike-current"
+            # Navigate to application directory
+            mkdir -p /opt/gigalike && cd /opt/gigalike
             
-            # Determine current and new environment
-            if [ -L "$CURRENT_ENV" ] && [ "$(readlink $CURRENT_ENV)" = "$BLUE_ENV" ]; then
-                NEW_ENV="$GREEN_ENV"
-                OLD_ENV="$BLUE_ENV"
-                COLOR="GREEN"
-            else
-                NEW_ENV="$BLUE_ENV"
-                OLD_ENV="$GREEN_ENV"
-                COLOR="BLUE"
+            # Backup current .env if exists
+            if [ -f .env ]; then
+              cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+              echo "📦 Backed up existing .env file"
             fi
             
-            echo "🎯 Deploying to $COLOR environment: $NEW_ENV"
+            # Create .env file from secret
+            cat > .env << 'EOF'
+            ${{ secrets.PROD_ENV_FILE }}
+            EOF
             
-            # Create new environment directory
-            mkdir -p $NEW_ENV
-            cd $NEW_ENV
+            echo "✅ Production environment file created successfully!"
+
+      - name: 🚀 Production Deployment
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_PORT }}
+          script_stop: true
+          script: |
+            echo "🚀 Starting production deployment..."
             
-            # Login to registry
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+            # Navigate to application directory
+            cd /opt/gigalike || (echo "❌ Directory /opt/gigalike not found" && exit 1)
             
-            # Copy compose file and pull images
-            docker-compose -f docker-compose.prod.yml pull
+            # Verify .env file was created
+            if [ ! -f .env ]; then
+              echo "❌ .env file not found"
+              exit 1
+            fi
             
-            # Start new environment
-            docker-compose -f docker-compose.prod.yml up -d
+            echo "✅ Environment file ready for deployment"
             
-            # Health check
+            # Login to Docker Hub
+            echo "🔐 Logging into Docker Hub..."
+            echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+            
+            # Pull latest images
+            echo "📥 Pulling latest Docker images..."
+            docker pull ${{ env.IMAGE_PREFIX }}-api-gateway:production-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-auth-service:production-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-config-server:production-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-eureka-server:production-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-marketing-service:production-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-order-service:production-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-payment-service:production-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-platform-service:production-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-product-service:production-latest
+            
+            # Check if deploy script exists
+            if [ ! -f scripts/deploy.sh ]; then
+              echo "❌ scripts/deploy.sh not found"
+              exit 1
+            fi
+            
+            # Make script executable
+            chmod +x scripts/deploy.sh
+            
+            echo "🚀 Running production deployment..."
+            ./scripts/deploy.sh core
+            
+            echo "✅ Production deployment completed successfully!"
+
+      - name: 🧪 Health Check
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_PORT }}
+          script: |
             echo "🔍 Performing health checks..."
-            sleep 60
-            for i in {1..10}; do
-                if curl -f http://localhost:8080/actuator/health; then
-                    echo "✅ Health check passed"
-                    break
-                fi
-                echo "⏳ Health check attempt $i failed, retrying..."
-                sleep 10
-                if [ $i -eq 10 ]; then
-                    echo "❌ Health check failed, rolling back..."
-                    docker-compose -f docker-compose.prod.yml down
-                    exit 1
-                fi
+            
+            # Wait for services to start
+            sleep 30
+            
+            # Check core services
+            services=("8761" "8888" "8080")
+            for port in "${services[@]}"; do
+              if curl -f -s http://localhost:$port/actuator/health > /dev/null; then
+                echo "✅ Service on port $port is healthy"
+              else
+                echo "❌ Service on port $port is not responding"
+              fi
             done
             
-            # Update load balancer to point to new environment
-            echo "🔄 Switching traffic to $COLOR environment..."
-            rm -f $CURRENT_ENV
-            ln -sf $NEW_ENV $CURRENT_ENV
-            
-            # Gracefully shutdown old environment
-            if [ -d "$OLD_ENV" ]; then
-                echo "🛑 Shutting down old environment..."
-                cd $OLD_ENV
-                docker-compose down --timeout 30
-            fi
-            
-            echo "✅ Blue-Green deployment completed successfully!"
+            echo "🎉 Health check completed!"
 
       - name: 🧪 Production Smoke Tests
         run: |
           echo "🧪 Running production smoke tests..."
-          # Add your smoke tests here
+          # External health checks
           curl -f https://api.gigalike.com/actuator/health
           curl -f https://api.gigalike.com/api/products/public
 

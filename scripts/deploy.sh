@@ -145,10 +145,6 @@ show_status() {
     docker-compose -f docker-compose.monitoring.yml ps 2>/dev/null || echo "Monitoring stack not deployed"
     
     echo
-    echo "Additional Services:"
-    docker-compose -f docker-compose.deploy.yml ps 2>/dev/null || echo "Additional services not deployed"
-    
-    echo
     print_header "SERVICE URLS"
     echo "🚪 API Gateway: http://localhost:${API_GATEWAY_PORT:-8080}"
     echo "🔍 Eureka Dashboard: http://localhost:${EUREKA_SERVER_PORT:-8761}"

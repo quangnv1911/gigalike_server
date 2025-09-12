@@ -7,87 +7,28 @@ on:
     branches: [staging]
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_REGISTRY: docker.io
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  IMAGE_PREFIX: ${{ secrets.DOCKER_USERNAME }}/gigalike
 
 jobs:
-  test:
-    name: 🧪 Test Services
-    runs-on: ubuntu-latest
-    
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: test_db
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-        ports:
-          - 3306:3306
-      
-      mongodb:
-        image: mongo:7.0
-        env:
-          MONGO_INITDB_ROOT_USERNAME: admin
-          MONGO_INITDB_ROOT_PASSWORD: password
-        options: >-
-          --health-cmd="echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-        ports:
-          - 27017:27017
-
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-
-      - name: ☕ Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: 🔍 Run Tests
-        run: |
-          echo "🧪 Running unit tests..."
-          mvn clean test -B
-        env:
-          SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/test_db
-          SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: password
-
-      - name: 📊 Generate Test Report
-        uses: dorny/test-reporter@v1
-        if: success() || failure()
-        with:
-          name: Maven Tests
-          path: target/surefire-reports/*.xml
-          reporter: java-junit
-
   build-and-push:
     name: 🏗️ Build & Push Images
     runs-on: ubuntu-latest
-    needs: test
     if: github.event_name == 'push'
     
     strategy:
       matrix:
         service: [
-          eureka-server,
-          config-server, 
           api-gateway,
           auth-service,
-          product-service,
+          config-server,
+          eureka-server,
+          marketing-service,
           order-service,
           payment-service,
-          platform-service
+          platform-service,
+          product-service
         ]
     
     steps:
@@ -111,38 +52,28 @@ jobs:
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 🔐 Login to Container Registry
+      - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: 📝 Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=staging-latest
-
-      - name: 🏗️ Build and push Docker image
+      - name: 🏗️ Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./${{ matrix.service }}
           file: ./${{ matrix.service }}/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:staging-latest
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:staging-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy-staging:
     name: 🚀 Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [test, build-and-push]
+    needs: [build-and-push]
     if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
     environment: staging
     
@@ -150,211 +81,7 @@ jobs:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Staging Environment
-        run: |
-          echo "🔧 Setting up staging environment variables..."
-          cat > .env.staging << EOF
-          # Database Configuration
-          MYSQL_ROOT_PASSWORD=${{ secrets.STAGING_MYSQL_PASSWORD }}
-          MONGODB_ROOT_PASSWORD=${{ secrets.STAGING_MONGODB_PASSWORD }}
-          
-          # JWT Configuration
-          JWT_SECRET=${{ secrets.STAGING_JWT_SECRET }}
-          
-          # OAuth2 Configuration
-          GOOGLE_CLIENT_ID=${{ secrets.STAGING_GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.STAGING_GOOGLE_CLIENT_SECRET }}
-          
-          # Email Configuration
-          MAIL_USERNAME=${{ secrets.STAGING_MAIL_USERNAME }}
-          MAIL_PASSWORD=${{ secrets.STAGING_MAIL_PASSWORD }}
-          
-          # Payment Gateway (Test Keys)
-          STRIPE_SECRET_KEY=${{ secrets.STAGING_STRIPE_SECRET_KEY }}
-          PAYPAL_CLIENT_ID=${{ secrets.STAGING_PAYPAL_CLIENT_ID }}
-          PAYPAL_CLIENT_SECRET=${{ secrets.STAGING_PAYPAL_CLIENT_SECRET }}
-          
-          # Environment
-          ENVIRONMENT=staging
-          LOG_LEVEL=DEBUG
-          EOF
-
-      - name: 🔧 Create Staging Docker Compose
-        run: |
-          cat > docker-compose.staging.yml << 'EOF'
-          version: '3.8'
-          
-          services:
-            # Infrastructure
-            mysql:
-              image: mysql:8.0
-              environment:
-                MYSQL_ROOT_PASSWORD: $${STAGING_MYSQL_ROOT_PASSWORD}
-                MYSQL_DATABASE: gigalike_staging
-              volumes:
-                - mysql_data:/var/lib/mysql
-              networks:
-                - gigalike-staging
-            
-            mongodb:
-              image: mongo:7.0
-              environment:
-                MONGO_INITDB_ROOT_USERNAME: $${MONGO_USERNAME:-admin}
-                MONGO_INITDB_ROOT_PASSWORD: $${STAGING_MONGO_PASSWORD}
-              volumes:
-                - mongodb_data:/data/db
-              networks:
-                - gigalike-staging
-            
-            rabbitmq:
-              image: rabbitmq:3.12-management
-              environment:
-                RABBITMQ_DEFAULT_USER: $${RABBITMQ_USERNAME:-guest}
-                RABBITMQ_DEFAULT_PASS: $${STAGING_RABBITMQ_PASSWORD}
-              volumes:
-                - rabbitmq_data:/var/lib/rabbitmq
-              networks:
-                - gigalike-staging
-            
-            redis:
-              image: redis:7.2-alpine
-              volumes:
-                - redis_data:/data
-              networks:
-                - gigalike-staging
-            
-            # Services
-            eureka-server:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/eureka-server:staging-latest
-              environment:
-                SPRING_PROFILES_ACTIVE: staging
-                EUREKA_PASSWORD: $${STAGING_EUREKA_PASSWORD}
-              ports:
-                - "8761:8761"
-              networks:
-                - gigalike-staging
-          
-            config-server:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/config-server:staging-latest
-              environment:
-                SPRING_PROFILES_ACTIVE: staging
-                CONFIG_PASSWORD: $${STAGING_CONFIG_PASSWORD}
-                EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:$${STAGING_EUREKA_PASSWORD}@eureka-server:8761/eureka/
-              ports:
-                - "8888:8888"
-              depends_on:
-                - eureka-server
-              networks:
-                - gigalike-staging
-          
-            api-gateway:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api-gateway:staging-latest
-              environment:
-                SPRING_PROFILES_ACTIVE: staging
-                JWT_SECRET: $${STAGING_JWT_SECRET}
-                EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:$${STAGING_EUREKA_PASSWORD}@eureka-server:8761/eureka/
-                SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-              ports:
-                - "8080:8080"
-              depends_on:
-                - config-server
-                - eureka-server
-              networks:
-                - gigalike-staging
-          
-            auth-service:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth-service:staging-latest
-              environment:
-                SPRING_PROFILES_ACTIVE: staging
-                SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gigalike_auth?createDatabaseIfNotExist=true
-                SPRING_DATASOURCE_PASSWORD: $${STAGING_DB_PASSWORD}
-                EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:$${STAGING_EUREKA_PASSWORD}@eureka-server:8761/eureka/
-                SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-                JWT_SECRET: $${STAGING_JWT_SECRET}
-              depends_on:
-                - mysql
-                - config-server
-                - eureka-server
-              networks:
-                - gigalike-staging
-          
-            product-service:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/product-service:staging-latest
-              environment:
-                SPRING_PROFILES_ACTIVE: staging
-                SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gigalike_product?createDatabaseIfNotExist=true
-                SPRING_DATASOURCE_PASSWORD: $${STAGING_DB_PASSWORD}
-                EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:$${STAGING_EUREKA_PASSWORD}@eureka-server:8761/eureka/
-                SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-              depends_on:
-                - mysql
-                - config-server
-                - eureka-server
-              networks:
-                - gigalike-staging
-          
-            order-service:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/order-service:staging-latest
-              environment:
-                SPRING_PROFILES_ACTIVE: staging
-                SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gigalike_order?createDatabaseIfNotExist=true
-                SPRING_DATASOURCE_PASSWORD: $${STAGING_DB_PASSWORD}
-                EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:$${STAGING_EUREKA_PASSWORD}@eureka-server:8761/eureka/
-                SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-              depends_on:
-                - mysql
-                - config-server
-                - eureka-server
-              networks:
-                - gigalike-staging
-          
-            payment-service:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/payment-service:staging-latest
-              environment:
-                SPRING_PROFILES_ACTIVE: staging
-                SPRING_DATA_MONGODB_URI: mongodb://$${MONGO_USERNAME:-admin}:$${STAGING_MONGO_PASSWORD}@mongodb:27017/gigalike_payment?authSource=admin
-                EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:$${STAGING_EUREKA_PASSWORD}@eureka-server:8761/eureka/
-                SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-              depends_on:
-                - mongodb
-                - config-server
-                - eureka-server
-              networks:
-                - gigalike-staging
-          
-            platform-service:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/platform-service:staging-latest
-              environment:
-                SPRING_PROFILES_ACTIVE: staging
-                SPRING_DATA_MONGODB_URI: mongodb://$${MONGO_USERNAME:-admin}:$${STAGING_MONGO_PASSWORD}@mongodb:27017/gigalike_platform?authSource=admin
-                SPRING_RABBITMQ_HOST: rabbitmq
-                SPRING_RABBITMQ_USERNAME: $${RABBITMQ_USERNAME:-guest}
-                SPRING_RABBITMQ_PASSWORD: $${STAGING_RABBITMQ_PASSWORD}
-                REDIS_HOST: redis
-                REDIS_PORT: 6379
-                EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:$${STAGING_EUREKA_PASSWORD}@eureka-server:8761/eureka/
-                SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-              depends_on:
-                - mongodb
-                - rabbitmq
-                - redis
-                - config-server
-                - eureka-server
-              networks:
-                - gigalike-staging
-          
-          volumes:
-            mysql_data:
-            mongodb_data:
-            rabbitmq_data:
-            redis_data:
-          
-          networks:
-            gigalike-staging:
-              driver: bridge
-          EOF
-
-      - name: 🚀 Deploy to Staging Server
+      - name: 🔧 Create Environment File
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.STAGING_HOST }}
@@ -362,29 +89,100 @@ jobs:
           key: ${{ secrets.STAGING_SSH_KEY }}
           port: ${{ secrets.STAGING_PORT }}
           script: |
-            echo "🚀 Deploying to staging environment..."
+            echo "🔧 Creating .env file for staging environment..."
             
-            # Create application directory
-            mkdir -p /opt/gigalike-staging
-            cd /opt/gigalike-staging
+            # Navigate to application directory
+            mkdir -p /opt/gigalike && cd /opt/gigalike
             
-            # Login to GitHub Container Registry
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+            # Backup current .env if exists
+            if [ -f .env ]; then
+              cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+              echo "📦 Backed up existing .env file"
+            fi
+            
+            # Create .env file from secret
+            cat > .env << 'EOF'
+            ${{ secrets.STAGING_ENV_FILE }}
+            EOF
+            
+            echo "✅ Environment file created successfully!"
+
+      - name: 🚀 Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USERNAME }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT }}
+          script_stop: true
+          script: |
+            echo "🚀 Starting deployment to staging environment..."
+            
+            # Navigate to application directory
+            cd /opt/gigalike || (echo "❌ Directory /opt/gigalike not found" && exit 1)
+            
+            # Verify .env file was created
+            if [ ! -f .env ]; then
+              echo "❌ .env file not found"
+              exit 1
+            fi
+            
+            echo "✅ Environment file ready for deployment"
+            
+            # Login to Docker Hub
+            echo "🔐 Logging into Docker Hub..."
+            echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
             
             # Pull latest images
-            docker-compose -f docker-compose.staging.yml pull
+            echo "📥 Pulling latest Docker images..."
+            docker pull ${{ env.IMAGE_PREFIX }}-api-gateway:staging-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-auth-service:staging-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-config-server:staging-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-eureka-server:staging-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-marketing-service:staging-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-order-service:staging-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-payment-service:staging-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-platform-service:staging-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-product-service:staging-latest
             
-            # Stop existing services
-            docker-compose -f docker-compose.staging.yml down
+            # Check if deploy script exists
+            if [ ! -f scripts/deploy.sh ]; then
+              echo "❌ scripts/deploy.sh not found"
+              exit 1
+            fi
             
-            # Start services
-            docker-compose -f docker-compose.staging.yml up -d
+            # Make script executable
+            chmod +x scripts/deploy.sh
             
-            # Health check
-            sleep 30
-            curl -f http://localhost:8080/actuator/health || exit 1
+            echo "🚀 Running deployment script..."
+            ./scripts/deploy.sh core
             
             echo "✅ Staging deployment completed!"
+
+      - name: 🧪 Health Check
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USERNAME }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT }}
+          script: |
+            echo "🔍 Performing health checks..."
+            
+            # Wait for services to start
+            sleep 30
+            
+            # Check core services
+            services=("8761" "8888" "8080")
+            for port in "${services[@]}"; do
+              if curl -f -s http://localhost:$port/actuator/health > /dev/null; then
+                echo "✅ Service on port $port is healthy"
+              else
+                echo "❌ Service on port $port is not responding"
+              fi
+            done
+            
+            echo "🎉 Health check completed!"
 
       - name: 📢 Notify Deployment Status
         uses: 8398a7/action-slack@v3

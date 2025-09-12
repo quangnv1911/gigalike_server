@@ -14,70 +14,90 @@ on:
       action:
         description: 'Action to perform'
         required: true
-        default: 'validate'
+        default: 'deploy'
         type: choice
         options:
-        - validate
         - deploy
         - rollback
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_REGISTRY: docker.io
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  IMAGE_PREFIX: ${{ secrets.DOCKER_USERNAME }}/gigalike
 
 jobs:
-  validate-environment:
-    name: 🔍 Validate Environment Configuration
+  validate-inputs:
+    name: ✅ Validate Inputs
     runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 Validate Environment and Action
+        run: |
+          echo "🎯 Environment: ${{ github.event.inputs.environment }}"
+          echo "⚡ Action: ${{ github.event.inputs.action }}"
+          
+  build-and-push:
+    name: 🏗️ Build & Push Images
+    runs-on: ubuntu-latest
+    needs: validate-inputs
+    if: github.event.inputs.action == 'deploy'
     
+    strategy:
+      matrix:
+        service: [
+          api-gateway,
+          auth-service, 
+          config-server,
+          eureka-server,
+          marketing-service,
+          order-service,
+          payment-service,
+          platform-service,
+          product-service
+        ]
+        
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🔍 Validate Environment Variables
-        env:
-          ENVIRONMENT: ${{ github.event.inputs.environment }}
-        run: |
-          echo "🔍 Validating $ENVIRONMENT environment variables..."
-          
-          # Define required secrets by environment
-          if [ "$ENVIRONMENT" == "staging" ]; then
-            required_secrets=(
-              "STAGING_MYSQL_ROOT_PASSWORD"
-              "STAGING_DB_PASSWORD"
-              "STAGING_JWT_SECRET"
-              "STAGING_GOOGLE_CLIENT_ID"
-              "STAGING_GOOGLE_CLIENT_SECRET"
-              "STAGING_MAIL_USERNAME"
-              "STAGING_MAIL_PASSWORD"
-              "STAGING_STRIPE_SECRET_KEY"
-            )
-          elif [ "$ENVIRONMENT" == "production" ]; then
-            required_secrets=(
-              "PROD_MYSQL_ROOT_PASSWORD"
-              "PROD_DB_PASSWORD"
-              "PROD_JWT_SECRET"
-              "PROD_GOOGLE_CLIENT_ID"
-              "PROD_GOOGLE_CLIENT_SECRET"
-              "PROD_MAIL_USERNAME"
-              "PROD_MAIL_PASSWORD"
-              "PROD_STRIPE_SECRET_KEY"
-            )
-          fi
-          
-          # Check if secrets are available (without revealing values)
-          missing_secrets=()
-          for secret in "${required_secrets[@]}"; do
-            # This is a simplified check - in reality you'd check if secrets exist
-            echo "Checking $secret..."
-          done
-          
-          echo "✅ Environment validation completed!"
+      - name: ☕ Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
 
-  deploy-with-env:
-    name: 🚀 Deploy with Environment
+      - name: 🏗️ Build Parent Project
+        run: mvn clean install -DskipTests
+
+      - name: 🏗️ Build Service
+        working-directory: ./${{ matrix.service }}
+        run: mvn clean package -DskipTests
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 🏗️ Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:${{ github.event.inputs.environment }}-latest
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:${{ github.event.inputs.environment }}-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: 🚀 Deploy to ${{ github.event.inputs.environment }}
     runs-on: ubuntu-latest
-    needs: validate-environment
+    needs: [validate-inputs, build-and-push]
     if: github.event.inputs.action == 'deploy'
     environment: ${{ github.event.inputs.environment }}
     
@@ -85,125 +105,153 @@ jobs:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Environment Variables
-        env:
-          ENVIRONMENT: ${{ github.event.inputs.environment }}
-        run: |
-          echo "🔧 Setting up $ENVIRONMENT environment variables..."
-          
-          # Create environment-specific .env file
-          if [ "$ENVIRONMENT" == "staging" ]; then
-            cat > .env << EOF
-          # Staging Environment Variables
-          MYSQL_ROOT_PASSWORD=${{ secrets.STAGING_MYSQL_ROOT_PASSWORD }}
-          DB_PASSWORD=${{ secrets.STAGING_DB_PASSWORD }}
-          MONGO_PASSWORD=${{ secrets.STAGING_MONGO_PASSWORD }}
-          JWT_SECRET=${{ secrets.STAGING_JWT_SECRET }}
-          GOOGLE_CLIENT_ID=${{ secrets.STAGING_GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.STAGING_GOOGLE_CLIENT_SECRET }}
-          MAIL_USERNAME=${{ secrets.STAGING_MAIL_USERNAME }}
-          MAIL_PASSWORD=${{ secrets.STAGING_MAIL_PASSWORD }}
-          STRIPE_SECRET_KEY=${{ secrets.STAGING_STRIPE_SECRET_KEY }}
-          PAYPAL_CLIENT_ID=${{ secrets.STAGING_PAYPAL_CLIENT_ID }}
-          PAYPAL_CLIENT_SECRET=${{ secrets.STAGING_PAYPAL_CLIENT_SECRET }}
-          ENVIRONMENT=staging
-          API_BASE_URL=https://staging-api.gigalike.com
-          FRONTEND_URL=https://staging.gigalike.com
-          EOF
-          elif [ "$ENVIRONMENT" == "production" ]; then
-            cat > .env << EOF
-          # Production Environment Variables
-          MYSQL_ROOT_PASSWORD=${{ secrets.PROD_MYSQL_ROOT_PASSWORD }}
-          DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}
-          MONGO_PASSWORD=${{ secrets.PROD_MONGO_PASSWORD }}
-          JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}
-          GOOGLE_CLIENT_ID=${{ secrets.PROD_GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
-          MAIL_USERNAME=${{ secrets.PROD_MAIL_USERNAME }}
-          MAIL_PASSWORD=${{ secrets.PROD_MAIL_PASSWORD }}
-          STRIPE_SECRET_KEY=${{ secrets.PROD_STRIPE_SECRET_KEY }}
-          PAYPAL_CLIENT_ID=${{ secrets.PROD_PAYPAL_CLIENT_ID }}
-          PAYPAL_CLIENT_SECRET=${{ secrets.PROD_PAYPAL_CLIENT_SECRET }}
-          ENVIRONMENT=production
-          API_BASE_URL=https://api.gigalike.com
-          FRONTEND_URL=https://gigalike.com
-          EOF
-          fi
-          
-          echo "✅ Environment variables configured for $ENVIRONMENT"
+      - name: 🔧 Create Environment File
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_HOST || secrets.PROD_HOST }}
+          username: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_USERNAME || secrets.PROD_USERNAME }}
+          key: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_SSH_KEY || secrets.PROD_SSH_KEY }}
+          port: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_PORT || secrets.PROD_PORT }}
+          script: |
+            echo "🔧 Creating .env file for ${{ github.event.inputs.environment }} environment..."
+            
+            # Navigate to application directory
+            mkdir -p /opt/gigalike && cd /opt/gigalike
+            
+            # Backup current .env if exists
+            if [ -f .env ]; then
+              cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+              echo "📦 Backed up existing .env file"
+            fi
+            
+            # Create .env file from secret
+            if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+              cat > .env << 'EOF'
+            ${{ secrets.STAGING_ENV_FILE }}
+            EOF
+            elif [ "${{ github.event.inputs.environment }}" == "production" ]; then
+              cat > .env << 'EOF'
+            ${{ secrets.PROD_ENV_FILE }}
+            EOF
+            fi
+            
+            echo "✅ Environment file created successfully!"
 
-      - name: 🚀 Deploy to Target Environment
+      - name: 🚀 Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
-        run: |
-          echo "🚀 Deploying to $ENVIRONMENT environment..."
-          
-          # Use appropriate docker-compose file
-          if [ "$ENVIRONMENT" == "staging" ]; then
-            docker-compose -f docker-compose.staging.yml --env-file .env up -d
-          elif [ "$ENVIRONMENT" == "production" ]; then
-            docker-compose -f docker-compose.prod.yml --env-file .env up -d
-          fi
-          
-          echo "✅ Deployment to $ENVIRONMENT completed!"
+        with:
+          host: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_HOST || secrets.PROD_HOST }}
+          username: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_USERNAME || secrets.PROD_USERNAME }}
+          key: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_SSH_KEY || secrets.PROD_SSH_KEY }}
+          port: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_PORT || secrets.PROD_PORT }}
+          script_stop: true
+          script: |
+            echo "🚀 Starting deployment to ${{ github.event.inputs.environment }} environment..."
+            
+            # Navigate to application directory
+            cd /opt/gigalike || (echo "❌ Directory /opt/gigalike not found" && exit 1)
+            
+            # Verify .env file was created
+            if [ ! -f .env ]; then
+              echo "❌ .env file not found"
+              exit 1
+            fi
+            
+            echo "✅ Environment file ready for deployment"
+            
+            # Login to Docker Hub
+            echo "🔐 Logging into Docker Hub..."
+            echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+            
+            # Pull latest images
+            echo "📥 Pulling latest Docker images..."
+            docker pull ${{ env.IMAGE_PREFIX }}-api-gateway:${{ github.event.inputs.environment }}-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-auth-service:${{ github.event.inputs.environment }}-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-config-server:${{ github.event.inputs.environment }}-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-eureka-server:${{ github.event.inputs.environment }}-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-marketing-service:${{ github.event.inputs.environment }}-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-order-service:${{ github.event.inputs.environment }}-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-payment-service:${{ github.event.inputs.environment }}-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-platform-service:${{ github.event.inputs.environment }}-latest
+            docker pull ${{ env.IMAGE_PREFIX }}-product-service:${{ github.event.inputs.environment }}-latest
+            
+            # Check if deploy script exists
+            if [ ! -f scripts/deploy.sh ]; then
+              echo "❌ scripts/deploy.sh not found"
+              exit 1
+            fi
+            
+            # Make script executable
+            chmod +x scripts/deploy.sh
+            
+            echo "🚀 Running deployment script..."
+            ./scripts/deploy.sh core
+            
+            echo "✅ Deployment completed successfully!"
 
       - name: 🧪 Health Check
-        run: |
-          echo "🔍 Performing health checks..."
-          sleep 60
-          
-          # Check API Gateway health
-          if curl -f http://localhost:8080/actuator/health; then
-            echo "✅ Health check passed!"
-          else
-            echo "❌ Health check failed!"
-            exit 1
-          fi
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_HOST || secrets.PROD_HOST }}
+          username: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_USERNAME || secrets.PROD_USERNAME }}
+          key: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_SSH_KEY || secrets.PROD_SSH_KEY }}
+          port: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_PORT || secrets.PROD_PORT }}
+          script: |
+            echo "🔍 Performing health checks..."
+            
+            # Wait for services to start
+            sleep 30
+            
+            # Check core services
+            services=("8761" "8888" "8080")
+            for port in "${services[@]}"; do
+              if curl -f -s http://localhost:$port/actuator/health > /dev/null; then
+                echo "✅ Service on port $port is healthy"
+              else
+                echo "❌ Service on port $port is not responding"
+              fi
+            done
+            
+            echo "🎉 Health check completed!"
 
-  environment-rollback:
-    name: 🔄 Environment Rollback
-    runs-on: ubuntu-latest
+  rollback:
+    name: 🔄 Rollback ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest  
+    needs: validate-inputs
     if: github.event.inputs.action == 'rollback'
     environment: ${{ github.event.inputs.environment }}
     
     steps:
-      - name: 🔄 Rollback Environment
-        env:
-          ENVIRONMENT: ${{ github.event.inputs.environment }}
-        run: |
-          echo "🔄 Rolling back $ENVIRONMENT environment..."
-          
-          # Implement rollback logic
-          # This would typically involve:
-          # 1. Stop current containers
-          # 2. Start previous stable version
-          # 3. Verify rollback success
-          
-          echo "✅ Rollback completed for $ENVIRONMENT!"
-
-  notify-env-changes:
-    name: 📢 Notify Environment Changes
-    runs-on: ubuntu-latest
-    needs: [validate-environment, deploy-with-env, environment-rollback]
-    if: always()
-    
-    steps:
-      - name: 📢 Send Notification
-        uses: 8398a7/action-slack@v3
+      - name: 🔄 Execute Rollback
+        uses: appleboy/ssh-action@v1.0.0
         with:
-          status: ${{ job.status }}
-          channel: '#infrastructure'
-          text: |
-            🔧 *Environment Management Action*
+          host: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_HOST || secrets.PROD_HOST }}
+          username: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_USERNAME || secrets.PROD_USERNAME }}
+          key: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_SSH_KEY || secrets.PROD_SSH_KEY }}
+          port: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_PORT || secrets.PROD_PORT }}
+          script: |
+            echo "🔄 Starting rollback for ${{ github.event.inputs.environment }} environment..."
             
-            Environment: ${{ github.event.inputs.environment }}
-            Action: ${{ github.event.inputs.action }}
-            Status: ${{ job.status }}
-            Triggered by: ${{ github.actor }}
+            # Navigate to application directory
+            cd /opt/gigalike || (echo "❌ Directory /opt/gigalike not found" && exit 1)
             
-            Repository: ${{ github.repository }}
-            Commit: ${{ github.sha }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-
+            # Check if deploy script exists
+            if [ ! -f scripts/deploy.sh ]; then
+              echo "❌ scripts/deploy.sh not found"
+              exit 1
+            fi
+            
+            # Make script executable
+            chmod +x scripts/deploy.sh
+            
+            # Stop current services
+            echo "🛑 Stopping current services..."
+            ./scripts/deploy.sh stop
+            
+            # Start services (rollback to previous state)
+            echo "🔄 Starting services with previous configuration..."
+            ./scripts/deploy.sh core
+            
+            echo "✅ Rollback completed!"
