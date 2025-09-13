@@ -2,6 +2,7 @@ package com.gigalike.auth.controller;
 
 import com.gigalike.auth.dto.request.UpdateUserAmount;
 import com.gigalike.auth.dto.request.UpdateUserRequest;
+import com.gigalike.auth.dto.request.UpdateUserTokenRequest;
 import com.gigalike.auth.dto.response.AuthResponse;
 import com.gigalike.auth.service.IUserService;
 import com.gigalike.shared.dto.ApiResponse;

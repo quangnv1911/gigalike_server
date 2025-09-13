@@ -2,7 +2,6 @@ package com.gigalike.product.dto.data;
 
 import com.gigalike.product.entity.Category;
 import com.gigalike.product.entity.Product;
-import com.gigalike.product.entity.ProductDuration;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -29,7 +28,7 @@ public class ProductDto {
     List<ProductDurationDto> productDurations;
 
     public static ProductDto fromProduct(Product product) {
-        List<ProductDurationDto> durationDtos = Optional.ofNullable(product.getProductDurations())
+        List<ProductDurationDto> durationDtos = Optional.ofNullable(product.getProductPlans())
                 .orElse(Collections.emptyList())
                 .stream()
                 .map(ProductDurationDto::fromEntity)

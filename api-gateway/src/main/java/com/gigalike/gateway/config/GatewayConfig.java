@@ -50,7 +50,6 @@ public class GatewayConfig {
                 .route("notification-service", r -> r.path("/api/notifications/**")
                         .filters(f -> f.filter(authFilter))
                         .uri("lb://notification-service"))
-                
                 .build();
     }
 }

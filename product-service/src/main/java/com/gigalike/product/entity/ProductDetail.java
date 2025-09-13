@@ -34,8 +34,8 @@ public class ProductDetail extends BaseEntity {
     ProductStatus status = ProductStatus.NotPurchased;
 
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    Product product;
+    @JoinColumn(name = "product_package_id", nullable = false)
+    ProductPackage productPackage;
 
     @Column(name = "user_id", nullable = false)
     UUID userId;

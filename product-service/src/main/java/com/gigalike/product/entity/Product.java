@@ -1,6 +1,7 @@
 package com.gigalike.product.entity;
 
 import com.gigalike.product.base.BaseEntity;
+import com.gigalike.shared.constant.ProductType;
 import com.gigalike.shared.converter.StringListConverter;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,10 +9,7 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
@@ -28,21 +26,12 @@ public class Product extends BaseEntity {
     @Column(name = "name", nullable = false)
     String name;
 
-    // giá tiền chung để hiển thị lên trang web
-    // giá iền thực tế sẽ lấy từ productDurations
-    @Column(name = "price", nullable = false)
-    @Builder.Default
-    BigDecimal price = BigDecimal.valueOf(0);
-
     @Column(name = "images", columnDefinition = "json")
     @Convert(converter = StringListConverter.class)
     List<String> images;
 
     @Column(name = "description", columnDefinition = "Text")
     String description;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    List<ProductDuration> productDurations;
 
     @Column(name = "total_sold")
     @Builder.Default
@@ -52,9 +41,15 @@ public class Product extends BaseEntity {
     @Builder.Default
     Integer stockQuantity = 0;
 
+    @Column(name = "product_type")
+    ProductType productType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     Category category;
 
+    @Column(name = "collaborator_id")
+    UUID collaboratorId;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    Set<ProductDetail> details;
+    private List<ProductPackage> packages;
 }

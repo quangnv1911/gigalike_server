@@ -9,11 +9,13 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
 import jakarta.persistence.criteria.Predicate;
 
 public class ProductSpecifications {
 
-    public static Specification<Product> filter(ProductFilterRequest filter) {
+    public static Specification<Product> filter(ProductFilterRequest filter, UUID collaboratorId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -22,6 +24,10 @@ public class ProductSpecifications {
             // Filter theo category object
             if (filter.getCategoryId() != null) {
                 predicates.add(cb.equal(categoryJoin.get("id"), filter.getCategoryId()));
+            }
+
+            if (collaboratorId!= null) {
+                predicates.add(cb.equal(categoryJoin.get("collaborator_id"), collaboratorId));
             }
 
             if (filter.getMinPrice() != null) {

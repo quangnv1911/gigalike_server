@@ -3,9 +3,11 @@ package com.gigalike.auth.service.impl;
 import com.gigalike.auth.dto.data.UserDto;
 import com.gigalike.auth.dto.request.UpdateUserAmount;
 import com.gigalike.auth.dto.request.UpdateUserRequest;
+import com.gigalike.auth.dto.request.UpdateUserTokenRequest;
 import com.gigalike.auth.entity.User;
 import com.gigalike.auth.repository.UserRepository;
 import com.gigalike.auth.service.IUserService;
+import com.gigalike.auth.util.UserUtil;
 import com.gigalike.shared.exception.BusinessException;
 import com.gigalike.shared.exception.NotFoundException;
 import com.gigalike.shared.exception.UserNotFoundException;
@@ -78,10 +80,20 @@ public class UserService implements IUserService {
         user.setIpValid(String.join(",", mergedSet));
     }
 
+    @Override
+    public void updateUserToken(UpdateUserTokenRequest updateUserTokenRequest) {
+        var user = findUserById(updateUserTokenRequest.getUserId());
+        String newUserToken = UserUtil.generateUserToken(user.getUsername());
+        user.setUserKey(newUserToken);
+        userRepository.save(user);
+        log.info("User id {}: token generated", user.getId());
+
+    }
+
     private User findUserById(UUID userId) {
         var user = userRepository.findById(userId);
         if (user.isEmpty()) {
-            log.info("Update user ip fail, cannot find user");
+            log.info("Cannot find user with id = {}", userId);
             throw new NotFoundException("User not found");
         }
         return user.get();

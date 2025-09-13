@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 
 @Configuration
 @ConditionalOnMissingBean(EnvironmentRepository.class)
-@Profile({"dev", "prod"})  // profile name
+@Profile({"dev", "prod", "staging"})  // profile name
 public class NativeRepositoryConfiguration {
     @Bean
     public NativeEnvironmentRepository nativeEnvironmentRepository(NativeEnvironmentRepositoryFactory factory,

@@ -15,8 +15,9 @@ import java.util.UUID;
 @SuperBuilder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProductFilterRequest extends PageRequestCustom {
-    private UUID categoryId;
-    private BigDecimal minPrice;
-    private BigDecimal maxPrice;
-    private String searchTerm;
+    UUID categoryId;
+    BigDecimal minPrice;
+    BigDecimal maxPrice;
+    String searchTerm;
+    String hostName;
 }

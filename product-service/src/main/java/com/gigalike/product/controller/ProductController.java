@@ -19,8 +19,13 @@ import java.util.UUID;
 public class ProductController {
     IProductService productService;
 
-    @GetMapping("/")
-    public ResponseEntity<ApiResponse<?>> getProductsByCate(@ModelAttribute ProductFilterRequest filterRequest) {
+    /**
+     * Để trả về danh sách các products theo cate
+     * @param filterRequest
+     * @return
+     */
+    @PostMapping("/")
+    public ResponseEntity<ApiResponse<?>> getProductsByCate(@RequestBody ProductFilterRequest filterRequest) {
         var response = productService.getProductsByCate(filterRequest);
         return ResponseEntity.ok(ApiResponse.success("Get all product by cate successfully", response));
     }

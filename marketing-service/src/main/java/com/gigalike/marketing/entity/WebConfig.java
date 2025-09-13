@@ -17,18 +17,20 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Document(value  = "collaborators")
+@Document(value  = "web_configs")
 @Data
-@SQLDelete(sql = "UPDATE collaborators SET is_delete = true WHERE id = ?")
-@SQLRestriction("is_deleted = false")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Collaborator extends BaseEntity {
-
+public class WebConfig extends BaseEntity {
     @Column(name = "user_id")
     UUID userId;
 
     @Column(name = "parent_id")
     UUID parentId;
+
+    @Column(name = "web_token")
+    String webToken;
+
+    String domain;
 
     BigDecimal price;
 }

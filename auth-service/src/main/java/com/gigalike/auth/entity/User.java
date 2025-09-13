@@ -1,6 +1,7 @@
 package com.gigalike.auth.entity;
 
 import com.gigalike.auth.base.BaseEntity;
+import com.gigalike.shared.constant.PartnerLevel;
 import com.gigalike.shared.constant.RoleValue;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,14 +23,18 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
+@Table(name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"username", "collaborator_id"}),
+                @UniqueConstraint(columnNames = {"email", "collaborator_id"})
+        })
 @Data
 @SQLDelete(sql = "UPDATE users SET is_delete = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class User extends BaseEntity implements UserDetails {
 
-    @Column(unique = true, nullable = false)
+public class User extends BaseEntity implements UserDetails {
+    @Column(unique = true)
     String username;
 
     @Column(unique = true, nullable = false)
@@ -69,11 +74,14 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "balance")
     BigDecimal balance = BigDecimal.ZERO;
 
-    @Column(name = "parent_id")
-    UUID parrentId;
+    @Column(name = "partner_level")
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    PartnerLevel partnerLevel = PartnerLevel.MEMBER;
 
-    @Column(name = "domain")
-    String domain;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "collaborator_id", nullable = false)
+    private Collaborator collaborator;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

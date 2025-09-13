@@ -1,11 +1,6 @@
 package com.gigalike.product.dto.data;
 
-import com.gigalike.product.entity.Product;
-import com.gigalike.product.entity.ProductDuration;
 import com.gigalike.shared.constant.Duration;
-import jakarta.persistence.Column;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -24,11 +19,11 @@ public class ProductDurationDto {
 
     BigDecimal price;
 
-    public static ProductDurationDto fromEntity(ProductDuration productDuration) {
+    public static ProductDurationDto fromEntity(ProductPlan productPlan) {
         return ProductDurationDto.builder()
-                .productDurationId(productDuration.getId())
-                .duration(productDuration.getDuration())
-                .price(productDuration.getPrice())
+                .productDurationId(productPlan.getId())
+                .duration(productPlan.getDuration())
+                .price(productPlan.getPrice())
                 .build();
     }
 }
